@@ -1,0 +1,29 @@
+services:
+  likec4:
+    image: likec4/likec4:latest
+    ports:
+      - "3000:5173"
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: start --host 0.0.0.0
+    environment:
+      - LIKEC4_WORKSPACE=/workspace
+
+  structurizr:
+    image: structurizr/lite:latest
+    ports:
+      - "3001:8080"
+    volumes:
+      - ./Pace/structurizr:/usr/local/structurizr
+
+  # Export service - run with: docker compose run --rm export <project>
+  export:
+    image: likec4/likec4:latest
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: ["sh", "-c"]
+    command: ["echo 'Usage: docker compose run --rm export Pace' && exit 1"]
+    profiles:
+      - tools

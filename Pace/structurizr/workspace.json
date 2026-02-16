@@ -1,0 +1,859 @@
+{
+  "configuration" : { },
+  "description" : "Sales and CRM Platform for Allsop Real Estate",
+  "documentation" : { },
+  "id" : 1,
+  "lastModifiedAgent" : "structurizr-ui",
+  "lastModifiedDate" : "2026-02-16T16:13:40Z",
+  "model" : {
+    "people" : [ {
+      "description" : "Allsop employee with Manager role.",
+      "id" : "1",
+      "name" : "Manager",
+      "properties" : {
+        "structurizr.dsl.identifier" : "manager"
+      },
+      "relationships" : [ {
+        "description" : "Manager interface",
+        "destinationId" : "18",
+        "id" : "26",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person,Allsop"
+    }, {
+      "description" : "Allsop employee with Admin role.",
+      "id" : "2",
+      "name" : "Admin",
+      "properties" : {
+        "structurizr.dsl.identifier" : "admin"
+      },
+      "relationships" : [ {
+        "description" : "Admin interface",
+        "destinationId" : "18",
+        "id" : "28",
+        "sourceId" : "2",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person,Allsop"
+    }, {
+      "description" : "Allsop employee with Agent role.",
+      "id" : "3",
+      "name" : "Agent",
+      "properties" : {
+        "structurizr.dsl.identifier" : "agent"
+      },
+      "relationships" : [ {
+        "description" : "Agent interface",
+        "destinationId" : "18",
+        "id" : "30",
+        "sourceId" : "3",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person,Allsop"
+    }, {
+      "description" : "Configures, monitors and maintains the backend, frontend and AI systems, and data flow between integrations.",
+      "id" : "4",
+      "name" : "Developer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "developer"
+      },
+      "relationships" : [ {
+        "description" : "Development",
+        "destinationId" : "18",
+        "id" : "32",
+        "sourceId" : "4",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Development",
+        "destinationId" : "21",
+        "id" : "33",
+        "sourceId" : "4",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Commits code",
+        "destinationId" : "16",
+        "id" : "34",
+        "sourceId" : "4",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person,Ingemark"
+    }, {
+      "description" : "Maintains the system, reacts to alerts and monitors the system.",
+      "id" : "5",
+      "name" : "Support Team",
+      "properties" : {
+        "structurizr.dsl.identifier" : "supportTeam"
+      },
+      "relationships" : [ {
+        "description" : "Monitors and supports",
+        "destinationId" : "18",
+        "id" : "35",
+        "sourceId" : "5",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Monitors and supports",
+        "destinationId" : "21",
+        "id" : "36",
+        "sourceId" : "5",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person,Ingemark"
+    } ],
+    "softwareSystems" : [ {
+      "description" : "Statistics tool integrated with Salesforce.",
+      "documentation" : { },
+      "group" : "Existing Allsopp CRM",
+      "id" : "6",
+      "name" : "Looker Studio",
+      "properties" : {
+        "structurizr.dsl.identifier" : "lookerStudio"
+      },
+      "tags" : "Element,Software System,External,Deprecated"
+    }, {
+      "description" : "Handles KPIs and business logic synchronization.",
+      "documentation" : { },
+      "group" : "Existing Allsopp CRM",
+      "id" : "7",
+      "name" : "Salesforce CRM",
+      "properties" : {
+        "structurizr.dsl.identifier" : "salesforce"
+      },
+      "relationships" : [ {
+        "description" : "Salesforce fetches PACE data",
+        "destinationId" : "18",
+        "id" : "57",
+        "sourceId" : "7",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      } ],
+      "tags" : "Element,Software System,External,Deprecated"
+    }, {
+      "description" : "Source of truth for authentication.",
+      "documentation" : { },
+      "group" : "Google Workspace",
+      "id" : "8",
+      "name" : "Google Identity Services",
+      "properties" : {
+        "structurizr.dsl.identifier" : "googleIdentity"
+      },
+      "relationships" : [ {
+        "description" : "Single Sign On",
+        "destinationId" : "1",
+        "id" : "27",
+        "sourceId" : "8",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Single Sign On",
+        "destinationId" : "2",
+        "id" : "29",
+        "sourceId" : "8",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Single Sign On",
+        "destinationId" : "3",
+        "id" : "31",
+        "sourceId" : "8",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Send emails as Agent or System.",
+      "documentation" : { },
+      "group" : "Google Workspace",
+      "id" : "9",
+      "name" : "Gmail API",
+      "properties" : {
+        "structurizr.dsl.identifier" : "gmailApi"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "WhatsApp for communication with Applicants.",
+      "documentation" : { },
+      "group" : "Communications",
+      "id" : "10",
+      "name" : "WhatsApp Provider",
+      "properties" : {
+        "structurizr.dsl.identifier" : "whatsappProvider"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "VoIP Call Center for Agents.",
+      "documentation" : { },
+      "group" : "Communications",
+      "id" : "11",
+      "name" : "Call Center",
+      "properties" : {
+        "structurizr.dsl.identifier" : "callCenter"
+      },
+      "relationships" : [ {
+        "description" : "Real-time conversation stream",
+        "destinationId" : "18",
+        "id" : "58",
+        "sourceId" : "11",
+        "tags" : "Relationship",
+        "technology" : "WebSocket"
+      } ],
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Real estate listings portal.",
+      "documentation" : { },
+      "group" : "Real Estate Portals",
+      "id" : "12",
+      "name" : "Property Finder Portal",
+      "properties" : {
+        "structurizr.dsl.identifier" : "propertyFinder"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Real estate listings portal.",
+      "documentation" : { },
+      "group" : "Real Estate Portals",
+      "id" : "13",
+      "name" : "Bayut Portal",
+      "properties" : {
+        "structurizr.dsl.identifier" : "bayut"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Allsop real estate listings portal.",
+      "documentation" : { },
+      "group" : "Real Estate Portals",
+      "id" : "14",
+      "name" : "Allsop & Allsop Portal",
+      "properties" : {
+        "structurizr.dsl.identifier" : "allsopPortal"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Primary cloud provider",
+      "documentation" : { },
+      "group" : "Infrastructure",
+      "id" : "15",
+      "name" : "Google Cloud Platform",
+      "properties" : {
+        "structurizr.dsl.identifier" : "gcp"
+      },
+      "tags" : "Element,Software System,Infrastructure"
+    }, {
+      "description" : "Source code repository",
+      "documentation" : { },
+      "group" : "Infrastructure",
+      "id" : "16",
+      "name" : "Bitbucket",
+      "properties" : {
+        "structurizr.dsl.identifier" : "bitbucket"
+      },
+      "relationships" : [ {
+        "description" : "Triggers build",
+        "destinationId" : "17",
+        "id" : "59",
+        "sourceId" : "16",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Software System,Infrastructure"
+    }, {
+      "description" : "CI/CD pipeline",
+      "documentation" : { },
+      "group" : "Infrastructure",
+      "id" : "17",
+      "name" : "Bitbucket Pipelines",
+      "properties" : {
+        "structurizr.dsl.identifier" : "bitbucketPipelines"
+      },
+      "relationships" : [ {
+        "description" : "Deploys",
+        "destinationId" : "18",
+        "id" : "60",
+        "sourceId" : "17",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Deploys",
+        "destinationId" : "21",
+        "id" : "61",
+        "sourceId" : "17",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Software System,Infrastructure"
+    }, {
+      "containers" : [ {
+        "description" : "Primary transactional database.",
+        "documentation" : { },
+        "id" : "19",
+        "name" : "Pace DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "paceDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL on Google Cloud SQL"
+      }, {
+        "description" : "Full-Stack Backend and Frontend.",
+        "documentation" : { },
+        "id" : "20",
+        "name" : "PACE Web App",
+        "properties" : {
+          "structurizr.dsl.identifier" : "paceWebApp"
+        },
+        "relationships" : [ {
+          "description" : "Reads/writes data",
+          "destinationId" : "19",
+          "id" : "39",
+          "sourceId" : "20",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "TypeScript, React, Node.js"
+      } ],
+      "description" : "Pace Full-Stack Backend and Frontend Service for Applicant and Listing Management.",
+      "documentation" : { },
+      "group" : "PACE Sales and CRM Platform",
+      "id" : "18",
+      "name" : "PACE Web",
+      "properties" : {
+        "structurizr.dsl.identifier" : "paceWeb"
+      },
+      "relationships" : [ {
+        "description" : "AI & other data flow",
+        "destinationId" : "21",
+        "id" : "37",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "SSE, REST API"
+      }, {
+        "description" : "Identity Confirmation",
+        "destinationId" : "8",
+        "id" : "38",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      }, {
+        "description" : "Share Listings (email)",
+        "destinationId" : "9",
+        "id" : "49",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      }, {
+        "description" : "Share listings (WhatsApp)",
+        "destinationId" : "10",
+        "id" : "50",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      }, {
+        "description" : "Publish listing to Property Finder",
+        "destinationId" : "12",
+        "id" : "51",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      }, {
+        "description" : "Publish listing to Bayut",
+        "destinationId" : "13",
+        "id" : "52",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      }, {
+        "description" : "Publish listing to Allsop portal",
+        "destinationId" : "14",
+        "id" : "53",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      }, {
+        "description" : "Softphone and backend integration",
+        "destinationId" : "11",
+        "id" : "54",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API, WebSocket"
+      }, {
+        "description" : "Initial Data Migration (CSV import)",
+        "destinationId" : "7",
+        "id" : "55",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "Manual file import"
+      }, {
+        "description" : "View statistics data (read-only)",
+        "destinationId" : "6",
+        "id" : "56",
+        "sourceId" : "18",
+        "tags" : "Relationship",
+        "technology" : "REST API"
+      } ],
+      "tags" : "Element,Software System,Ingemark"
+    }, {
+      "containers" : [ {
+        "description" : "Dedicated AI database.",
+        "documentation" : { },
+        "id" : "22",
+        "name" : "Assistcraft DB",
+        "properties" : {
+          "structurizr.dsl.identifier" : "assistcraftDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL on Google Cloud SQL"
+      }, {
+        "components" : [ {
+          "description" : "Main backend service.",
+          "documentation" : { },
+          "id" : "24",
+          "name" : "Assistcraft Backend",
+          "properties" : {
+            "structurizr.dsl.identifier" : "assistcraftBackend"
+          },
+          "relationships" : [ {
+            "description" : "Fetches database schema",
+            "destinationId" : "20",
+            "id" : "41",
+            "sourceId" : "24",
+            "tags" : "Relationship",
+            "technology" : "REST API"
+          }, {
+            "description" : "Fetches database schema",
+            "destinationId" : "18",
+            "id" : "42",
+            "linkedRelationshipId" : "41",
+            "sourceId" : "24",
+            "technology" : "REST API"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python, FastAPI"
+        }, {
+          "description" : "Model Context Protocol servers.",
+          "documentation" : { },
+          "id" : "25",
+          "name" : "MCP Servers",
+          "properties" : {
+            "structurizr.dsl.identifier" : "mcpServers"
+          },
+          "relationships" : [ {
+            "description" : "Fetch data via MCP",
+            "destinationId" : "20",
+            "id" : "47",
+            "sourceId" : "25",
+            "tags" : "Relationship",
+            "technology" : "MCP Protocol"
+          }, {
+            "description" : "Fetch data via MCP",
+            "destinationId" : "18",
+            "id" : "48",
+            "linkedRelationshipId" : "47",
+            "sourceId" : "25",
+            "technology" : "MCP Protocol"
+          } ],
+          "tags" : "Element,Component,WIP",
+          "technology" : "Python, MCP"
+        } ],
+        "description" : "AI Suite for conversation analysis.",
+        "documentation" : { },
+        "id" : "23",
+        "name" : "AI Assistcraft",
+        "properties" : {
+          "structurizr.dsl.identifier" : "aiAssistcraft"
+        },
+        "relationships" : [ {
+          "description" : "Reads/writes AI data",
+          "destinationId" : "22",
+          "id" : "40",
+          "sourceId" : "23",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        }, {
+          "description" : "Fetches database schema",
+          "destinationId" : "20",
+          "id" : "43",
+          "linkedRelationshipId" : "41",
+          "sourceId" : "23",
+          "technology" : "REST API"
+        }, {
+          "description" : "Fetches database schema",
+          "destinationId" : "18",
+          "id" : "44",
+          "linkedRelationshipId" : "41",
+          "sourceId" : "23",
+          "technology" : "REST API"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python, LLM"
+      } ],
+      "description" : "PACE AI Suite based on the AI Assistcraft proprietary platform. Provides AI capabilities, conversation analysis, transcript.",
+      "documentation" : { },
+      "group" : "PACE Sales and CRM Platform",
+      "id" : "21",
+      "name" : "PACE AI Suite",
+      "properties" : {
+        "structurizr.dsl.identifier" : "paceAiSuite"
+      },
+      "relationships" : [ {
+        "description" : "Fetches database schema",
+        "destinationId" : "20",
+        "id" : "45",
+        "linkedRelationshipId" : "41",
+        "sourceId" : "21",
+        "technology" : "REST API"
+      }, {
+        "description" : "Fetches database schema",
+        "destinationId" : "18",
+        "id" : "46",
+        "linkedRelationshipId" : "41",
+        "sourceId" : "21",
+        "technology" : "REST API"
+      } ],
+      "tags" : "Element,Software System,Ingemark"
+    } ]
+  },
+  "name" : "PACE Architecture",
+  "properties" : {
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.error" : "24",
+    "structurizr.inspection.warning" : "0",
+    "structurizr.dsl" : "d29ya3NwYWNlICJQQUNFIEFyY2hpdGVjdHVyZSIgIlNhbGVzIGFuZCBDUk0gUGxhdGZvcm0gZm9yIEFsbHNvcCBSZWFsIEVzdGF0ZSIgewoKICAgIG1vZGVsIHsKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgICAgICMgQUNUT1JTCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCiAgICAgICAgbWFuYWdlciA9IHBlcnNvbiAiTWFuYWdlciIgIkFsbHNvcCBlbXBsb3llZSB3aXRoIE1hbmFnZXIgcm9sZS4iICJBbGxzb3AiCiAgICAgICAgYWRtaW4gPSBwZXJzb24gIkFkbWluIiAiQWxsc29wIGVtcGxveWVlIHdpdGggQWRtaW4gcm9sZS4iICJBbGxzb3AiCiAgICAgICAgYWdlbnQgPSBwZXJzb24gIkFnZW50IiAiQWxsc29wIGVtcGxveWVlIHdpdGggQWdlbnQgcm9sZS4iICJBbGxzb3AiCiAgICAgICAgZGV2ZWxvcGVyID0gcGVyc29uICJEZXZlbG9wZXIiICJDb25maWd1cmVzLCBtb25pdG9ycyBhbmQgbWFpbnRhaW5zIHRoZSBiYWNrZW5kLCBmcm9udGVuZCBhbmQgQUkgc3lzdGVtcywgYW5kIGRhdGEgZmxvdyBiZXR3ZWVuIGludGVncmF0aW9ucy4iICJJbmdlbWFyayIKICAgICAgICBzdXBwb3J0VGVhbSA9IHBlcnNvbiAiU3VwcG9ydCBUZWFtIiAiTWFpbnRhaW5zIHRoZSBzeXN0ZW0sIHJlYWN0cyB0byBhbGVydHMgYW5kIG1vbml0b3JzIHRoZSBzeXN0ZW0uIiAiSW5nZW1hcmsiCgogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBFWFRFUk5BTCBTWVNURU1TCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCiAgICAgICAgZ3JvdXAgIkV4aXN0aW5nIEFsbHNvcHAgQ1JNIiB7CiAgICAgICAgICAgIGxvb2tlclN0dWRpbyA9IHNvZnR3YXJlU3lzdGVtICJMb29rZXIgU3R1ZGlvIiAiU3RhdGlzdGljcyB0b29sIGludGVncmF0ZWQgd2l0aCBTYWxlc2ZvcmNlLiIgIkV4dGVybmFsLERlcHJlY2F0ZWQiCiAgICAgICAgICAgIHNhbGVzZm9yY2UgPSBzb2Z0d2FyZVN5c3RlbSAiU2FsZXNmb3JjZSBDUk0iICJIYW5kbGVzIEtQSXMgYW5kIGJ1c2luZXNzIGxvZ2ljIHN5bmNocm9uaXphdGlvbi4iICJFeHRlcm5hbCxEZXByZWNhdGVkIgogICAgICAgIH0KCiAgICAgICAgZ3JvdXAgIkdvb2dsZSBXb3Jrc3BhY2UiIHsKICAgICAgICAgICAgZ29vZ2xlSWRlbnRpdHkgPSBzb2Z0d2FyZVN5c3RlbSAiR29vZ2xlIElkZW50aXR5IFNlcnZpY2VzIiAiU291cmNlIG9mIHRydXRoIGZvciBhdXRoZW50aWNhdGlvbi4iICJFeHRlcm5hbCIKICAgICAgICAgICAgZ21haWxBcGkgPSBzb2Z0d2FyZVN5c3RlbSAiR21haWwgQVBJIiAiU2VuZCBlbWFpbHMgYXMgQWdlbnQgb3IgU3lzdGVtLiIgIkV4dGVybmFsIgogICAgICAgIH0KCiAgICAgICAgZ3JvdXAgIkNvbW11bmljYXRpb25zIiB7CiAgICAgICAgICAgIHdoYXRzYXBwUHJvdmlkZXIgPSBzb2Z0d2FyZVN5c3RlbSAiV2hhdHNBcHAgUHJvdmlkZXIiICJXaGF0c0FwcCBmb3IgY29tbXVuaWNhdGlvbiB3aXRoIEFwcGxpY2FudHMuIiAiRXh0ZXJuYWwiCiAgICAgICAgICAgIGNhbGxDZW50ZXIgPSBzb2Z0d2FyZVN5c3RlbSAiQ2FsbCBDZW50ZXIiICJWb0lQIENhbGwgQ2VudGVyIGZvciBBZ2VudHMuIiAiRXh0ZXJuYWwiCiAgICAgICAgfQoKICAgICAgICBncm91cCAiUmVhbCBFc3RhdGUgUG9ydGFscyIgewogICAgICAgICAgICBwcm9wZXJ0eUZpbmRlciA9IHNvZnR3YXJlU3lzdGVtICJQcm9wZXJ0eSBGaW5kZXIgUG9ydGFsIiAiUmVhbCBlc3RhdGUgbGlzdGluZ3MgcG9ydGFsLiIgIkV4dGVybmFsIgogICAgICAgICAgICBiYXl1dCA9IHNvZnR3YXJlU3lzdGVtICJCYXl1dCBQb3J0YWwiICJSZWFsIGVzdGF0ZSBsaXN0aW5ncyBwb3J0YWwuIiAiRXh0ZXJuYWwiCiAgICAgICAgICAgIGFsbHNvcFBvcnRhbCA9IHNvZnR3YXJlU3lzdGVtICJBbGxzb3AgJiBBbGxzb3AgUG9ydGFsIiAiQWxsc29wIHJlYWwgZXN0YXRlIGxpc3RpbmdzIHBvcnRhbC4iICJFeHRlcm5hbCIKICAgICAgICB9CgogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBJTkZSQVNUUlVDVFVSRQogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgogICAgICAgIGdyb3VwICJJbmZyYXN0cnVjdHVyZSIgewogICAgICAgICAgICBnY3AgPSBzb2Z0d2FyZVN5c3RlbSAiR29vZ2xlIENsb3VkIFBsYXRmb3JtIiAiUHJpbWFyeSBjbG91ZCBwcm92aWRlciIgIkluZnJhc3RydWN0dXJlIgogICAgICAgICAgICBiaXRidWNrZXQgPSBzb2Z0d2FyZVN5c3RlbSAiQml0YnVja2V0IiAiU291cmNlIGNvZGUgcmVwb3NpdG9yeSIgIkluZnJhc3RydWN0dXJlIgogICAgICAgICAgICBiaXRidWNrZXRQaXBlbGluZXMgPSBzb2Z0d2FyZVN5c3RlbSAiQml0YnVja2V0IFBpcGVsaW5lcyIgIkNJL0NEIHBpcGVsaW5lIiAiSW5mcmFzdHJ1Y3R1cmUiCiAgICAgICAgfQoKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgICAgICMgUEFDRSBQTEFURk9STSAoc3BsaXQgaW50byB0d28gc3lzdGVtcykKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKICAgICAgICBncm91cCAiUEFDRSBTYWxlcyBhbmQgQ1JNIFBsYXRmb3JtIiB7CiAgICAgICAgICAgIHBhY2VXZWIgPSBzb2Z0d2FyZVN5c3RlbSAiUEFDRSBXZWIiICJQYWNlIEZ1bGwtU3RhY2sgQmFja2VuZCBhbmQgRnJvbnRlbmQgU2VydmljZSBmb3IgQXBwbGljYW50IGFuZCBMaXN0aW5nIE1hbmFnZW1lbnQuIiAiSW5nZW1hcmsiIHsKICAgICAgICAgICAgICAgIHBhY2VEYiA9IGNvbnRhaW5lciAiUGFjZSBEQiIgIlByaW1hcnkgdHJhbnNhY3Rpb25hbCBkYXRhYmFzZS4iICJQb3N0Z3JlU1FMIG9uIEdvb2dsZSBDbG91ZCBTUUwiICJEYXRhYmFzZSIKICAgICAgICAgICAgICAgIHBhY2VXZWJBcHAgPSBjb250YWluZXIgIlBBQ0UgV2ViIEFwcCIgIkZ1bGwtU3RhY2sgQmFja2VuZCBhbmQgRnJvbnRlbmQuIiAiVHlwZVNjcmlwdCwgUmVhY3QsIE5vZGUuanMiCiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIHBhY2VBaVN1aXRlID0gc29mdHdhcmVTeXN0ZW0gIlBBQ0UgQUkgU3VpdGUiICJQQUNFIEFJIFN1aXRlIGJhc2VkIG9uIHRoZSBBSSBBc3Npc3RjcmFmdCBwcm9wcmlldGFyeSBwbGF0Zm9ybS4gUHJvdmlkZXMgQUkgY2FwYWJpbGl0aWVzLCBjb252ZXJzYXRpb24gYW5hbHlzaXMsIHRyYW5zY3JpcHQuIiAiSW5nZW1hcmsiIHsKICAgICAgICAgICAgICAgIGFzc2lzdGNyYWZ0RGIgPSBjb250YWluZXIgIkFzc2lzdGNyYWZ0IERCIiAiRGVkaWNhdGVkIEFJIGRhdGFiYXNlLiIgIlBvc3RncmVTUUwgb24gR29vZ2xlIENsb3VkIFNRTCIgIkRhdGFiYXNlIgogICAgICAgICAgICAgICAgYWlBc3Npc3RjcmFmdCA9IGNvbnRhaW5lciAiQUkgQXNzaXN0Y3JhZnQiICJBSSBTdWl0ZSBmb3IgY29udmVyc2F0aW9uIGFuYWx5c2lzLiIgIlB5dGhvbiwgTExNIiB7CiAgICAgICAgICAgICAgICAgICAgYXNzaXN0Y3JhZnRCYWNrZW5kID0gY29tcG9uZW50ICJBc3Npc3RjcmFmdCBCYWNrZW5kIiAiTWFpbiBiYWNrZW5kIHNlcnZpY2UuIiAiUHl0aG9uLCBGYXN0QVBJIgogICAgICAgICAgICAgICAgICAgIG1jcFNlcnZlcnMgPSBjb21wb25lbnQgIk1DUCBTZXJ2ZXJzIiAiTW9kZWwgQ29udGV4dCBQcm90b2NvbCBzZXJ2ZXJzLiIgIlB5dGhvbiwgTUNQIiAiV0lQIgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgICAgICMgUkVMQVRJT05TSElQUyAtIEFjdG9ycyB0byBTeXN0ZW1zCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCiAgICAgICAgbWFuYWdlciAtPiBwYWNlV2ViICJNYW5hZ2VyIGludGVyZmFjZSIKICAgICAgICBnb29nbGVJZGVudGl0eSAtPiBtYW5hZ2VyICJTaW5nbGUgU2lnbiBPbiIKCiAgICAgICAgYWRtaW4gLT4gcGFjZVdlYiAiQWRtaW4gaW50ZXJmYWNlIgogICAgICAgIGdvb2dsZUlkZW50aXR5IC0+IGFkbWluICJTaW5nbGUgU2lnbiBPbiIKCiAgICAgICAgYWdlbnQgLT4gcGFjZVdlYiAiQWdlbnQgaW50ZXJmYWNlIgogICAgICAgIGdvb2dsZUlkZW50aXR5IC0+IGFnZW50ICJTaW5nbGUgU2lnbiBPbiIKCiAgICAgICAgZGV2ZWxvcGVyIC0+IHBhY2VXZWIgIkRldmVsb3BtZW50IgogICAgICAgIGRldmVsb3BlciAtPiBwYWNlQWlTdWl0ZSAiRGV2ZWxvcG1lbnQiCiAgICAgICAgZGV2ZWxvcGVyIC0+IGJpdGJ1Y2tldCAiQ29tbWl0cyBjb2RlIgoKICAgICAgICBzdXBwb3J0VGVhbSAtPiBwYWNlV2ViICJNb25pdG9ycyBhbmQgc3VwcG9ydHMiCiAgICAgICAgc3VwcG9ydFRlYW0gLT4gcGFjZUFpU3VpdGUgIk1vbml0b3JzIGFuZCBzdXBwb3J0cyIKCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICAgICAjIFJFTEFUSU9OU0hJUFMgLSBQQUNFIEludGVybmFsCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCiAgICAgICAgcGFjZVdlYiAtPiBwYWNlQWlTdWl0ZSAiQUkgJiBvdGhlciBkYXRhIGZsb3ciICJTU0UsIFJFU1QgQVBJIgogICAgICAgIHBhY2VXZWIgLT4gZ29vZ2xlSWRlbnRpdHkgIklkZW50aXR5IENvbmZpcm1hdGlvbiIgIlJFU1QgQVBJIgoKICAgICAgICAjIENvbnRhaW5lci1sZXZlbCByZWxhdGlvbnNoaXBzCiAgICAgICAgcGFjZVdlYkFwcCAtPiBwYWNlRGIgIlJlYWRzL3dyaXRlcyBkYXRhIiAiU1FMIgogICAgICAgIGFpQXNzaXN0Y3JhZnQgLT4gYXNzaXN0Y3JhZnREYiAiUmVhZHMvd3JpdGVzIEFJIGRhdGEiICJTUUwiCiAgICAgICAgYXNzaXN0Y3JhZnRCYWNrZW5kIC0+IHBhY2VXZWJBcHAgIkZldGNoZXMgZGF0YWJhc2Ugc2NoZW1hIiAiUkVTVCBBUEkiCiAgICAgICAgbWNwU2VydmVycyAtPiBwYWNlV2ViQXBwICJGZXRjaCBkYXRhIHZpYSBNQ1AiICJNQ1AgUHJvdG9jb2wiCgogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBSRUxBVElPTlNISVBTIC0gUEFDRSB0byBFeHRlcm5hbAogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgogICAgICAgIHBhY2VXZWIgLT4gZ21haWxBcGkgIlNoYXJlIExpc3RpbmdzIChlbWFpbCkiICJSRVNUIEFQSSIKICAgICAgICBwYWNlV2ViIC0+IHdoYXRzYXBwUHJvdmlkZXIgIlNoYXJlIGxpc3RpbmdzIChXaGF0c0FwcCkiICJSRVNUIEFQSSIKICAgICAgICBwYWNlV2ViIC0+IHByb3BlcnR5RmluZGVyICJQdWJsaXNoIGxpc3RpbmcgdG8gUHJvcGVydHkgRmluZGVyIiAiUkVTVCBBUEkiCiAgICAgICAgcGFjZVdlYiAtPiBiYXl1dCAiUHVibGlzaCBsaXN0aW5nIHRvIEJheXV0IiAiUkVTVCBBUEkiCiAgICAgICAgcGFjZVdlYiAtPiBhbGxzb3BQb3J0YWwgIlB1Ymxpc2ggbGlzdGluZyB0byBBbGxzb3AgcG9ydGFsIiAiUkVTVCBBUEkiCiAgICAgICAgcGFjZVdlYiAtPiBjYWxsQ2VudGVyICJTb2Z0cGhvbmUgYW5kIGJhY2tlbmQgaW50ZWdyYXRpb24iICJSRVNUIEFQSSwgV2ViU29ja2V0IgogICAgICAgIHBhY2VXZWIgLT4gc2FsZXNmb3JjZSAiSW5pdGlhbCBEYXRhIE1pZ3JhdGlvbiAoQ1NWIGltcG9ydCkiICJNYW51YWwgZmlsZSBpbXBvcnQiCiAgICAgICAgcGFjZVdlYiAtPiBsb29rZXJTdHVkaW8gIlZpZXcgc3RhdGlzdGljcyBkYXRhIChyZWFkLW9ubHkpIiAiUkVTVCBBUEkiCgogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBSRUxBVElPTlNISVBTIC0gRXh0ZXJuYWwgdG8gUEFDRQogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgogICAgICAgIHNhbGVzZm9yY2UgLT4gcGFjZVdlYiAiU2FsZXNmb3JjZSBmZXRjaGVzIFBBQ0UgZGF0YSIgIlJFU1QgQVBJIgogICAgICAgIGNhbGxDZW50ZXIgLT4gcGFjZVdlYiAiUmVhbC10aW1lIGNvbnZlcnNhdGlvbiBzdHJlYW0iICJXZWJTb2NrZXQiCgogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBSRUxBVElPTlNISVBTIC0gSW5mcmFzdHJ1Y3R1cmUKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKICAgICAgICBiaXRidWNrZXQgLT4gYml0YnVja2V0UGlwZWxpbmVzICJUcmlnZ2VycyBidWlsZCIKICAgICAgICBiaXRidWNrZXRQaXBlbGluZXMgLT4gcGFjZVdlYiAiRGVwbG95cyIKICAgICAgICBiaXRidWNrZXRQaXBlbGluZXMgLT4gcGFjZUFpU3VpdGUgIkRlcGxveXMiCiAgICB9CgogICAgdmlld3MgewogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBMMTogU1lTVEVNIENPTlRFWFQKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKICAgICAgICBzeXN0ZW1Db250ZXh0IHBhY2VXZWIgIlN5c3RlbUNvbnRleHQiICJMMSAtIFN5c3RlbSBDb250ZXh0IiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBpbmNsdWRlIHBhY2VBaVN1aXRlCiAgICAgICAgfQoKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgICAgICMgTDI6IENPTlRBSU5FUiBWSUVXUwogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CgogICAgICAgIGNvbnRhaW5lciBwYWNlV2ViICJQYWNlV2ViQ29udGFpbmVycyIgIkwyIC0gUEFDRSBXZWIgQ29udGFpbmVycyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICB9CgogICAgICAgIGNvbnRhaW5lciBwYWNlQWlTdWl0ZSAiUGFjZUFpQ29udGFpbmVycyIgIkwyIC0gUEFDRSBBSSBTdWl0ZSBDb250YWluZXJzIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgIH0KCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICAgICAjIEwzOiBBSSBDT01QT05FTlRTCiAgICAgICAgIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCiAgICAgICAgY29tcG9uZW50IGFpQXNzaXN0Y3JhZnQgIkFJQ29tcG9uZW50cyIgIkwzIC0gQUkgQXNzaXN0Y3JhZnQgQ29tcG9uZW50cyIgewogICAgICAgICAgICBpbmNsdWRlICoKICAgICAgICB9CgogICAgICAgICMgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICAgICAgIyBTVFlMRVMKICAgICAgICAjID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKICAgICAgICBzdHlsZXMgewogICAgICAgICAgICBlbGVtZW50ICJQZXJzb24iIHsKICAgICAgICAgICAgICAgIHNoYXBlIFBlcnNvbgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMDg0MjdiCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiQWxsc29wIiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICNkNGEwMTcKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJJbmdlbWFyayIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMTE2OGJkCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiU29mdHdhcmUgU3lzdGVtIiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICMxMTY4YmQKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJFeHRlcm5hbCIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjOTk5OTk5CiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiRGVwcmVjYXRlZCIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjZDRhMDE3CiAgICAgICAgICAgICAgICBvcGFjaXR5IDcwCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiQ29udGFpbmVyIiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICM0MzhkZDUKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJDb21wb25lbnQiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzg1YmJmMAogICAgICAgICAgICAgICAgY29sb3IgIzAwMDAwMAogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIkRhdGFiYXNlIiB7CiAgICAgICAgICAgICAgICBzaGFwZSBDeWxpbmRlcgogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjNDM4ZGQ1CiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiSW5mcmFzdHJ1Y3R1cmUiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzY2NjY2NgogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIldJUCIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjZDRhMDE3CiAgICAgICAgICAgICAgICBvcGFjaXR5IDgwCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9Cn0="
+  },
+  "views" : {
+    "componentViews" : [ {
+      "containerId" : "23",
+      "description" : "L3 - AI Assistcraft Components",
+      "elements" : [ {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "24",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "25",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "AIComponents",
+      "name" : "Component View: PACE AI Suite - AI Assistcraft",
+      "order" : 4,
+      "relationships" : [ {
+        "id" : "42"
+      }, {
+        "id" : "48"
+      } ]
+    } ],
+    "configuration" : {
+      "branding" : { },
+      "lastSavedView" : "SystemContext",
+      "metadataSymbols" : "SquareBrackets",
+      "styles" : {
+        "elements" : [ {
+          "background" : "#d4a017",
+          "color" : "#ffffff",
+          "tag" : "Allsop"
+        }, {
+          "background" : "#85bbf0",
+          "color" : "#000000",
+          "tag" : "Component"
+        }, {
+          "background" : "#438dd5",
+          "color" : "#ffffff",
+          "tag" : "Container"
+        }, {
+          "background" : "#438dd5",
+          "color" : "#ffffff",
+          "shape" : "Cylinder",
+          "tag" : "Database"
+        }, {
+          "background" : "#d4a017",
+          "opacity" : 70,
+          "tag" : "Deprecated"
+        }, {
+          "background" : "#999999",
+          "color" : "#ffffff",
+          "tag" : "External"
+        }, {
+          "background" : "#666666",
+          "color" : "#ffffff",
+          "tag" : "Infrastructure"
+        }, {
+          "background" : "#1168bd",
+          "color" : "#ffffff",
+          "tag" : "Ingemark"
+        }, {
+          "background" : "#08427b",
+          "color" : "#ffffff",
+          "shape" : "Person",
+          "tag" : "Person"
+        }, {
+          "background" : "#1168bd",
+          "color" : "#ffffff",
+          "tag" : "Software System"
+        }, {
+          "background" : "#d4a017",
+          "opacity" : 80,
+          "tag" : "WIP"
+        } ]
+      },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "description" : "L2 - PACE Web Containers",
+      "elements" : [ {
+        "id" : "19",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "20",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "PaceWebContainers",
+      "name" : "Container View: PACE Web",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "39"
+      }, {
+        "id" : "45"
+      } ],
+      "softwareSystemId" : "18"
+    }, {
+      "description" : "L2 - PACE AI Suite Containers",
+      "elements" : [ {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "23",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "PaceAiContainers",
+      "name" : "Container View: PACE AI Suite",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "40"
+      }, {
+        "id" : "44"
+      } ],
+      "softwareSystemId" : "21"
+    } ],
+    "systemContextViews" : [ {
+      "description" : "L1 - System Context",
+      "dimensions" : {
+        "height" : 2945,
+        "width" : 11474
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 4675,
+        "y" : 2285
+      }, {
+        "id" : "2",
+        "x" : 5245,
+        "y" : 2277
+      }, {
+        "id" : "3",
+        "x" : 4055,
+        "y" : 2285
+      }, {
+        "id" : "4",
+        "x" : 6545,
+        "y" : 1235
+      }, {
+        "id" : "5",
+        "x" : 7349,
+        "y" : 1235
+      }, {
+        "id" : "6",
+        "x" : 9675,
+        "y" : 2147
+      }, {
+        "id" : "7",
+        "x" : 8925,
+        "y" : 2147
+      }, {
+        "id" : "8",
+        "x" : 3589,
+        "y" : 580
+      }, {
+        "id" : "9",
+        "x" : 3590,
+        "y" : 210
+      }, {
+        "id" : "10",
+        "x" : 8175,
+        "y" : 2147
+      }, {
+        "id" : "11",
+        "x" : 7425,
+        "y" : 2147
+      }, {
+        "id" : "12",
+        "x" : 6420,
+        "y" : 640
+      }, {
+        "id" : "13",
+        "x" : 6420,
+        "y" : 1010
+      }, {
+        "id" : "14",
+        "x" : 6420,
+        "y" : 270
+      }, {
+        "id" : "17",
+        "x" : 2635,
+        "y" : 1380
+      }, {
+        "id" : "18",
+        "x" : 4638,
+        "y" : 1534
+      }, {
+        "id" : "21",
+        "x" : 5590,
+        "y" : 1532
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "SystemContext",
+      "name" : "System Context View: PACE Web",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "26"
+      }, {
+        "id" : "27",
+        "vertices" : [ {
+          "x" : 3815,
+          "y" : 2875
+        }, {
+          "x" : 4880,
+          "y" : 2870
+        } ]
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "29",
+        "vertices" : [ {
+          "x" : 3815,
+          "y" : 2870
+        }, {
+          "x" : 5445,
+          "y" : 2870
+        } ]
+      }, {
+        "id" : "30"
+      }, {
+        "id" : "31",
+        "vertices" : [ {
+          "x" : 3815,
+          "y" : 2870
+        }, {
+          "x" : 4260,
+          "y" : 2870
+        } ]
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "33",
+        "vertices" : [ {
+          "x" : 4413,
+          "y" : 1834
+        } ]
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36",
+        "vertices" : [ {
+          "x" : 4488,
+          "y" : 1430
+        }, {
+          "x" : 4488,
+          "y" : 1834
+        } ]
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "46"
+      }, {
+        "id" : "49"
+      }, {
+        "id" : "50",
+        "vertices" : [ {
+          "x" : 5988,
+          "y" : 2030
+        } ]
+      }, {
+        "id" : "51",
+        "vertices" : [ {
+          "x" : 4865,
+          "y" : 790
+        } ]
+      }, {
+        "id" : "52",
+        "vertices" : [ {
+          "x" : 4865,
+          "y" : 1165
+        } ]
+      }, {
+        "id" : "53",
+        "vertices" : [ {
+          "x" : 4865,
+          "y" : 425
+        } ]
+      }, {
+        "id" : "54",
+        "vertices" : [ {
+          "x" : 5144,
+          "y" : 2101
+        } ]
+      }, {
+        "id" : "55",
+        "vertices" : [ {
+          "x" : 6618,
+          "y" : 2030
+        } ]
+      }, {
+        "id" : "56",
+        "vertices" : [ {
+          "x" : 7488,
+          "y" : 2030
+        } ]
+      }, {
+        "id" : "57",
+        "vertices" : [ {
+          "x" : 6918,
+          "y" : 2030
+        } ]
+      }, {
+        "id" : "58",
+        "vertices" : [ {
+          "x" : 5331,
+          "y" : 1866
+        } ]
+      }, {
+        "id" : "60",
+        "vertices" : [ {
+          "x" : 3655,
+          "y" : 1288
+        } ]
+      }, {
+        "id" : "61",
+        "vertices" : [ {
+          "x" : 4134,
+          "y" : 1834
+        } ]
+      } ],
+      "softwareSystemId" : "18"
+    } ]
+  }
+}

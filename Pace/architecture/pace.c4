@@ -1,0 +1,340 @@
+specification {
+  element actor {
+    style {
+      shape person
+      color amber
+    }
+  }
+
+  element system {
+    style {
+      color slate
+    }
+  }
+
+  element external {
+    style {
+      color gray
+    }
+  }
+
+  element container {
+    style {
+      color blue
+    }
+  }
+
+  element component {
+    style {
+      color sky
+    }
+  }
+
+  element database {
+    style {
+      shape storage
+      color green
+    }
+  }
+
+  element infra {
+    style {
+      color muted
+    }
+  }
+
+  tag deprecated
+  tag wip
+}
+
+model {
+
+  // ============================================================
+  // EXTERNAL SYSTEMS (defined first so they can be referenced)
+  // ============================================================
+
+  lookerStudio = external 'Looker Studio' {
+    #deprecated
+    description 'Statistics tool integrated with Salesforce.'
+    technology 'Google Looker'
+  }
+
+  salesforce = external 'Salesforce CRM' {
+    #deprecated
+    description 'Handles KPIs and business logic synchronization.'
+    technology 'Salesforce'
+  }
+
+  whatsappProvider = external 'WhatsApp Provider' {
+    description 'WhatsApp for communication with Applicants.'
+    technology 'WhatsApp Business API'
+  }
+
+  gmailApi = external 'Gmail API' {
+    description 'Send emails as Agent or System.'
+    technology 'Google Gmail API'
+  }
+
+  googleIdentity = external 'Google Identity Services' {
+    description 'Source of truth for authentication.'
+    technology 'Google Identity Platform'
+  }
+
+  propertyFinder = external 'Property Finder Portal' {
+    description 'Real estate listings portal.'
+    technology 'REST API'
+  }
+
+  bayut = external 'Bayut Portal' {
+    description 'Real estate listings portal.'
+    technology 'REST API'
+  }
+
+  allsopPortal = external 'Allsop & Allsop Portal' {
+    description 'Allsop real estate listings portal.'
+    technology 'REST API'
+  }
+
+  callCenter = external 'Call Center' {
+    description 'VoIP Call Center for Agents.'
+    technology 'VoIP, WebSocket'
+  }
+
+  // ============================================================
+  // INFRASTRUCTURE
+  // ============================================================
+
+  gcp = infra 'Google Cloud Platform' {
+    description 'Primary cloud provider'
+    technology 'GCP'
+  }
+
+  bitbucket = infra 'Bitbucket' {
+    description 'Source code repository'
+    technology 'Atlassian Bitbucket'
+  }
+
+  bitbucketPipelines = infra 'Bitbucket Pipelines' {
+    description 'CI/CD pipeline'
+    technology 'Bitbucket Pipelines'
+  }
+
+  // ============================================================
+  // PACE PLATFORM
+  // ============================================================
+
+  pace = system 'PACE Sales and CRM Platform' {
+    description 'System responsible for routing, transforming, and processing messages.'
+
+    paceDb = database 'Pace DB' {
+      description 'Primary transactional database.'
+      technology 'PostgreSQL on Google Cloud SQL'
+    }
+
+    assistcraftDb = database 'Assistcraft DB' {
+      description 'Dedicated AI database.'
+      technology 'PostgreSQL on Google Cloud SQL'
+    }
+
+    paceAuthenticator = container 'PACE Authenticator' {
+      description 'Authentication service with SSO.'
+      technology 'Go, OAuth 2.0'
+      -> googleIdentity 'Identity Confirmation'
+      -> paceDb 'Reads/writes user data'
+    }
+
+    aiAssistcraft = container 'AI Assistcraft' {
+      description 'AI Suite for conversation analysis.'
+      technology 'Python, LLM'
+      -> assistcraftDb 'Reads/writes AI data'
+
+      assistcraftBackend = component 'Assistcraft Backend' {
+        description 'Main backend service.'
+        technology 'Python, FastAPI'
+      }
+
+      mcpServers = component 'MCP Servers' {
+        #wip
+        description 'Model Context Protocol servers.'
+        technology 'Python, MCP'
+      }
+    }
+
+    paceWeb = container 'PACE Web' {
+      description 'Full-Stack Backend and Frontend.'
+      technology 'TypeScript, React, Node.js'
+      -> paceAuthenticator 'Fetches employee data'
+      -> paceDb 'Reads/writes data'
+      -> gmailApi 'Share listings (email)'
+      -> whatsappProvider 'Share listings (WhatsApp)'
+      -> propertyFinder 'Publish listing'
+      -> bayut 'Publish listing'
+      -> allsopPortal 'Publish listing'
+      -> callCenter 'Softphone integration'
+      -> aiAssistcraft 'AI data flow'
+      -> salesforce 'Data migration'
+      -> lookerStudio 'View statistics'
+    }
+  }
+
+  // ============================================================
+  // Add relationships from external to internal
+  // ============================================================
+
+  salesforce -> pace.paceWeb 'Fetches PACE data'
+  callCenter -> pace.paceWeb 'Real-time conversation stream'
+  bitbucket -> bitbucketPipelines 'Triggers build'
+  bitbucketPipelines -> pace 'Deploys'
+
+  // ============================================================
+  // ACTORS (defined last since they reference everything)
+  // ============================================================
+
+  manager = actor 'Manager' {
+    description 'Allsop employee with Manager role.'
+    -> pace.paceWeb 'Manages listings and team'
+    -> googleIdentity 'Single Sign-On'
+  }
+
+  admin = actor 'Admin' {
+    description 'Allsop employee with Admin role.'
+    -> pace.paceWeb 'Administers system'
+    -> googleIdentity 'Single Sign-On'
+  }
+
+  agent = actor 'Agent' {
+    description 'Allsop employee with Agent role.'
+    -> pace.paceWeb 'Manages applicants and listings'
+    -> googleIdentity 'Single Sign-On'
+  }
+
+  developer = actor 'Developer' {
+    description 'Configures and maintains systems.'
+    -> pace 'Develops and maintains'
+    -> bitbucket 'Commits code'
+  }
+
+  supportTeam = actor 'Support Team' {
+    description 'Maintains and monitors the system.'
+    -> pace 'Monitors and supports'
+  }
+}
+
+views {
+
+  view systemContext {
+    title 'PACE System Context (L1)'
+    description 'High-level view showing PACE and its interactions.'
+
+    include
+      pace,
+      manager,
+      admin,
+      agent,
+      developer,
+      supportTeam,
+      lookerStudio,
+      salesforce,
+      whatsappProvider,
+      gmailApi,
+      googleIdentity,
+      propertyFinder,
+      bayut,
+      allsopPortal,
+      callCenter
+
+    autoLayout TopBottom
+  }
+
+  view containers of pace {
+    title 'PACE Containers (L2)'
+    description 'Internal structure of the PACE platform.'
+
+    include
+      *,
+      googleIdentity,
+      gmailApi,
+      whatsappProvider,
+      callCenter,
+      propertyFinder,
+      bayut,
+      allsopPortal,
+      salesforce,
+      lookerStudio
+
+    exclude
+      pace.aiAssistcraft.*
+  }
+
+  view authFlow {
+    title 'Authentication Flow (L2)'
+    description 'Google SSO authentication flow.'
+
+    include
+      manager,
+      admin,
+      agent,
+      googleIdentity,
+      pace.paceAuthenticator,
+      pace.paceWeb,
+      pace.paceDb
+  }
+
+  view portalIntegration {
+    title 'Portal Integration (L2)'
+    description 'Publishing listings to real estate portals.'
+
+    include
+      pace.paceWeb,
+      pace.paceDb,
+      propertyFinder,
+      bayut,
+      allsopPortal
+  }
+
+  view communicationChannels {
+    title 'Communication Channels (L2)'
+    description 'Email, WhatsApp, and VoIP integrations.'
+
+    include
+      agent,
+      pace.paceWeb,
+      gmailApi,
+      whatsappProvider,
+      callCenter
+  }
+
+  view aiComponents of pace.aiAssistcraft {
+    title 'AI Assistcraft Components (L3)'
+    description 'Internal structure of AI Assistcraft.'
+
+    include
+      *,
+      pace.paceWeb,
+      pace.assistcraftDb,
+      callCenter
+  }
+
+  view salesforceIntegration {
+    title 'Salesforce Integration (L2)'
+    description 'Integration with legacy Salesforce CRM.'
+
+    include
+      salesforce,
+      lookerStudio,
+      pace.paceWeb,
+      pace.paceDb
+  }
+
+  view infrastructure {
+    title 'Infrastructure Overview'
+    description 'Deployment infrastructure and CI/CD.'
+
+    include
+      developer,
+      gcp,
+      bitbucket,
+      bitbucketPipelines,
+      pace
+  }
+}
