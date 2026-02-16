@@ -27,6 +27,9 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
 
         group "Communications" {
             whatsappProvider = softwareSystem "WhatsApp Provider" "WhatsApp for communication with Applicants." "External"
+        }
+
+         group "VoIP Solution" {
             callCenter = softwareSystem "Call Center" "VoIP Call Center for Agents." "External"
         }
 
@@ -108,14 +111,14 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         paceWeb -> bayut "Publish listing to Bayut" "REST API"
         paceWeb -> allsopPortal "Publish listing to Allsop portal" "REST API"
         paceWeb -> callCenter "Softphone and backend integration" "REST API, WebSocket"
-        paceWeb -> salesforce "Initial Data Migration (CSV import)" "Manual file import"
+        salesforce -> paceWeb "Initial Data Migration (CSV import)" "Manual file import"
         paceWeb -> lookerStudio "View statistics data (read-only)" "REST API"
 
         # ============================================================
         # RELATIONSHIPS - External to PACE
         # ============================================================
 
-        salesforce -> paceWeb "Salesforce fetches PACE data" "REST API"
+        paceWeb -> salesforce "Salesforce fetches PACE data" "REST API"
         callCenter -> paceWeb "Real-time conversation stream" "WebSocket"
 
         # ============================================================
@@ -123,8 +126,6 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # ============================================================
 
         bitbucket -> bitbucketPipelines "Triggers build"
-        bitbucketPipelines -> paceWeb "Deploys"
-        bitbucketPipelines -> paceAiSuite "Deploys"
     }
 
     views {
