@@ -21,23 +21,22 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         }
 
         group "Google Workspace" {
-            googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External"
-            gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External"
+            googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External,GoogleWorkspace"
+            gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External,GoogleWorkspace"
         }
 
-        group "Communications" {
-            whatsappProvider = softwareSystem "WhatsApp Provider" "WhatsApp for communication with Applicants." "External"
-        }
-
-         group "VoIP Solution" {
-            callCenter = softwareSystem "Call Center" "VoIP Call Center for Agents." "External"
+        group "Exotel" {
+            whatsapp = softwareSystem "WhatsApp" "WhatsApp for communication with Applicants." "External,Exotel"
+            callCenter = softwareSystem "Call Center" "VoIP Call Center for Agents." "External,Exotel"
         }
 
         group "Real Estate Portals" {
-            propertyFinder = softwareSystem "Property Finder Portal" "Real estate listings portal." "External"
-            bayut = softwareSystem "Bayut Portal" "Real estate listings portal." "External"
-            allsopPortal = softwareSystem "Allsop & Allsop Portal" "Allsop real estate listings portal." "External"
+            propertyFinder = softwareSystem "Property Finder Portal" "Real estate listings portal." "External,RealEstatePortal"
+            bayut = softwareSystem "Bayut Portal" "Real estate listings portal." "External,RealEstatePortal"
+            allsopPortal = softwareSystem "Allsop & Allsop Portal" "Allsop real estate listings portal." "External,RealEstatePortal"
         }
+
+        salesforceAdapter = softwareSystem "Salesforce Adapter" "Integrates with PACE to fetch relevant data and ensure Salesforce functionality remains consistent." "External,Deprecated"
 
         # ============================================================
         # INFRASTRUCTURE
@@ -47,29 +46,30 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
             gcp = softwareSystem "Google Cloud Platform" "Primary cloud provider" "Infrastructure"
             bitbucket = softwareSystem "Bitbucket" "Source code repository" "Infrastructure"
             bitbucketPipelines = softwareSystem "Bitbucket Pipelines" "CI/CD pipeline" "Infrastructure"
+            argo = softwareSystem "Argo" "Deploys all components to GKE" "Infrastructure"
+            pagerDuty = softwareSystem "PagerDuty" "Alerting system" "Infrastructure"
+            gcpOperations = softwareSystem "Google Cloud Operations Suite" "Observability and monitoring" "Infrastructure"
         }
 
         # ============================================================
-        # PACE PLATFORM (split into two systems)
+        # PACE PLATFORM
         # ============================================================
 
         group "PACE Sales and CRM Platform" {
             paceWeb = softwareSystem "PACE Web" "Pace Full-Stack Backend and Frontend Service for Applicant and Listing Management." "Ingemark" {
                 paceDb = container "Pace DB" "Primary transactional database." "PostgreSQL on Google Cloud SQL" "Database"
-                paceWebApp = container "PACE Web App" "Full-Stack Backend and Frontend." "TypeScript, React, Node.js"
+                pace = container "PACE" "PACE Sales and CRM Platform." "Payload, Next.js"
             }
 
             paceAiSuite = softwareSystem "PACE AI Suite" "PACE AI Suite based on the AI Assistcraft proprietary platform. Provides AI capabilities, conversation analysis, transcript." "Ingemark" {
                 assistcraftDb = container "Assistcraft DB" "Dedicated AI database." "PostgreSQL on Google Cloud SQL" "Database"
-                aiAssistcraft = container "AI Assistcraft" "AI Suite for conversation analysis." "Python, LLM" {
-                    assistcraftBackend = component "Assistcraft Backend" "Main backend service." "Python, FastAPI"
-                    mcpServers = component "MCP Servers" "Model Context Protocol servers." "Python, MCP" "WIP"
-                }
+                paceAiBackend = container "PACE AI Backend" "Main AssistCraft service, backend logic and agentic functionality." "Python, FastAPI"
+                mcpServer = container "MCP Server" "MCP server with specific functionality used by AI agents." "Python, FastMCP"
             }
         }
 
         # ============================================================
-        # RELATIONSHIPS - Actors to Systems
+        # RELATIONSHIPS - Actors to Systems (Context level)
         # ============================================================
 
         manager -> paceWeb "Manager interface"
@@ -89,24 +89,14 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         supportTeam -> paceAiSuite "Monitors and supports"
 
         # ============================================================
-        # RELATIONSHIPS - PACE Internal
+        # RELATIONSHIPS - System level (Context diagram)
         # ============================================================
 
         paceWeb -> paceAiSuite "AI & other data flow" "SSE, REST API"
         paceWeb -> googleIdentity "Identity Confirmation" "REST API"
 
-        # Container-level relationships
-        paceWebApp -> paceDb "Reads/writes data" "SQL"
-        aiAssistcraft -> assistcraftDb "Reads/writes AI data" "SQL"
-        assistcraftBackend -> paceWebApp "Fetches database schema" "REST API"
-        mcpServers -> paceWebApp "Fetch data via MCP" "MCP Protocol"
-
-        # ============================================================
-        # RELATIONSHIPS - PACE to External
-        # ============================================================
-
         paceWeb -> gmailApi "Share Listings (email)" "REST API"
-        paceWeb -> whatsappProvider "Share listings (WhatsApp)" "REST API"
+        paceWeb -> whatsapp "Share listings (WhatsApp)" "REST API"
         paceWeb -> propertyFinder "Publish listing to Property Finder" "REST API"
         paceWeb -> bayut "Publish listing to Bayut" "REST API"
         paceWeb -> allsopPortal "Publish listing to Allsop portal" "REST API"
@@ -114,18 +104,56 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         salesforce -> paceWeb "Initial Data Migration (CSV import)" "Manual file import"
         paceWeb -> lookerStudio "View statistics data (read-only)" "REST API"
 
-        # ============================================================
-        # RELATIONSHIPS - External to PACE
-        # ============================================================
-
         paceWeb -> salesforce "Salesforce fetches PACE data" "REST API"
         callCenter -> paceWeb "Real-time conversation stream" "WebSocket"
+
+        # ============================================================
+        # RELATIONSHIPS - Container level (Container diagram)
+        # ============================================================
+
+        # Actors to containers
+        manager -> pace "Manager interface (INTF-USER-01)" "HTTPS/REST"
+        admin -> pace "Admin interface (INTF-USER-02)" "HTTPS/REST"
+        agent -> pace "Agent interface (INTF-USER-03)" "HTTPS/REST"
+
+        # PACE internal
+        pace -> paceDb "Reads/writes data (INTF-DB-01)" "PostgreSQL Wire Protocol"
+        paceAiBackend -> assistcraftDb "Reads/writes AI data (INTF-DB-02)" "PostgreSQL Wire Protocol"
+
+        # PACE <-> AI Backend
+        pace -> paceAiBackend "AI streaming request (INTF-AI-01)" "HTTP SSE"
+        paceAiBackend -> pace "Fetches database schema (INTF-AI-02)" "HTTP REST"
+
+        # AI Backend <-> MCP Servers
+        paceAiBackend -> mcpServer "AI agent communication (INTF-AI-04..0x)" "HTTP Streaming"
+        mcpServer -> pace "Fetch PACE data (INTF-AI-03)" "HTTP REST"
+
+        # PACE to external systems
+        pace -> googleIdentity "Identity Confirmation (INTF-AUTH-02)" "HTTP REST"
+        pace -> gmailApi "Send emails (INTF-PACE-03)" "HTTP REST"
+        pace -> whatsapp "WhatsApp messaging (INTF-PACE-07)" "HTTP REST"
+        pace -> allsopPortal "Publish listing (INTF-PACE-04)" "HTTP REST"
+        pace -> bayut "Publish listing (INTF-PACE-05)" "HTTP REST"
+        pace -> propertyFinder "Publish listing (INTF-PACE-06)" "HTTP REST"
+        pace -> callCenter "Softphone integration (INTF-PACE-01)" "HTTP REST, WebSocket"
+        pace -> lookerStudio "View statistics (INTF-PACE-02)" "HTTP REST"
+        pace -> salesforceAdapter "Salesforce integration (INTF-SF-01)" "HTTP REST"
+        salesforceAdapter -> salesforce "Synchronizes data" "REST API"
 
         # ============================================================
         # RELATIONSHIPS - Infrastructure
         # ============================================================
 
-        bitbucket -> bitbucketPipelines "Triggers build"
+        bitbucket -> bitbucketPipelines "Detect changes and builds images"
+        bitbucket -> argo "Connects to CI/CD repository"
+        argo -> gcp "Deploys images"
+        gcpOperations -> pagerDuty "Creates alerts based on rules"
+
+        developer -> bitbucketPipelines "Modifies CI scripts"
+        developer -> argo "Triggers deployments"
+
+        supportTeam -> pagerDuty "Reacts to alerts"
+        supportTeam -> gcpOperations "Monitors system"
     }
 
     views {
@@ -136,26 +164,31 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         systemContext paceWeb "SystemContext" "L1 - System Context" {
             include *
             include paceAiSuite
+            exclude salesforceAdapter
         }
 
         # ============================================================
         # L2: CONTAINER VIEWS
         # ============================================================
 
-        container paceWeb "PaceWebContainers" "L2 - PACE Web Containers" {
-            include *
+        container paceWeb "PaceWebContainers" "L2 - PACE Platform Container Diagram" {
+            # PACE Web containers
+            include pace paceDb
+            # PACE AI containers
+            include paceAiBackend mcpServer assistcraftDb
+            # Actors
+            include manager admin agent developer supportTeam
+            # External systems
+            include googleIdentity gmailApi whatsapp callCenter
+            include propertyFinder bayut allsopPortal
+            include lookerStudio salesforce salesforceAdapter
+            # Infrastructure
+            include bitbucket bitbucketPipelines argo pagerDuty gcpOperations gcp
         }
 
         container paceAiSuite "PaceAiContainers" "L2 - PACE AI Suite Containers" {
             include *
-        }
-
-        # ============================================================
-        # L3: AI COMPONENTS
-        # ============================================================
-
-        component aiAssistcraft "AIComponents" "L3 - AI Assistcraft Components" {
-            include *
+            autoLayout
         }
 
         # ============================================================
@@ -192,22 +225,26 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
                 background #438dd5
                 color #ffffff
             }
-            element "Component" {
-                background #85bbf0
-                color #000000
-            }
             element "Database" {
                 shape Cylinder
                 background #438dd5
                 color #ffffff
             }
+            element "GoogleWorkspace" {
+                background #34A853
+                color #ffffff
+            }
+            element "Exotel" {
+                background #7B1FA2
+                color #ffffff
+            }
+            element "RealEstatePortal" {
+                background #E65100
+                color #ffffff
+            }
             element "Infrastructure" {
                 background #666666
                 color #ffffff
-            }
-            element "WIP" {
-                background #d4a017
-                opacity 80
             }
         }
     }
