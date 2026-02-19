@@ -16,29 +16,53 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # ============================================================
 
         group "Existing Allsopp CRM" {
-            salesforce = softwareSystem "Salesforce CRM" "Handles KPIs and business logic synchronization." "External,Deprecated"
+            salesforce = softwareSystem "Salesforce CRM" "Handles KPIs and business logic synchronization." "External,Deprecated" {
+                url "http://localhost:3001/workspace/documentation#salesforce-crm-deprecated"
+            }
         }
 
         group "Google Workspace" {
-            googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External,GoogleWorkspace"
-            gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External,GoogleWorkspace"
-            googleCalendarApi = softwareSystem "Google Calendar API" "Agent calendar management — viewings, meetings, availability." "External,GoogleWorkspace"
-            lookerStudio = softwareSystem "Looker Studio" "Embedded analytics and KPI dashboards." "External,GoogleWorkspace"
-            vertexAi = softwareSystem "Vertex AI" "LLM inference and semantic search." "External,GoogleWorkspace"
+            googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External,GoogleWorkspace" {
+                url "http://localhost:3001/workspace/documentation#google-identity-services"
+            }
+            gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External,GoogleWorkspace" {
+                url "http://localhost:3001/workspace/documentation#gmail-api"
+            }
+            googleCalendarApi = softwareSystem "Google Calendar API" "Agent calendar management — viewings, meetings, availability." "External,GoogleWorkspace" {
+                url "http://localhost:3001/workspace/documentation#google-calendar-api"
+            }
+            lookerStudio = softwareSystem "Looker Studio" "Embedded analytics and KPI dashboards." "External,GoogleWorkspace" {
+                url "http://localhost:3001/workspace/documentation#looker-studio"
+            }
+            vertexAi = softwareSystem "Vertex AI" "LLM inference and semantic search." "External,GoogleWorkspace" {
+                url "http://localhost:3001/workspace/documentation#vertex-ai"
+            }
         }
 
         group "Exotel" {
-            whatsapp = softwareSystem "WhatsApp" "WhatsApp for communication with Applicants." "External,Exotel"
-            callCenter = softwareSystem "Call Center" "VoIP Call Center for Agents." "External,Exotel"
+            whatsapp = softwareSystem "WhatsApp" "WhatsApp for communication with Applicants." "External,Exotel" {
+                url "http://localhost:3001/workspace/documentation#whatsapp"
+            }
+            callCenter = softwareSystem "Call Center" "VoIP Call Center for Agents." "External,Exotel" {
+                url "http://localhost:3001/workspace/documentation#call-center"
+            }
         }
 
         group "Real Estate Portals" {
-            propertyFinder = softwareSystem "Property Finder Portal" "Real estate listings portal." "External,RealEstatePortal"
-            bayut = softwareSystem "Bayut Portal" "Real estate listings portal." "External,RealEstatePortal"
-            allsopPortal = softwareSystem "Allsop & Allsop Portal" "Allsop real estate listings portal." "External,RealEstatePortal"
+            propertyFinder = softwareSystem "Property Finder Portal" "Real estate listings portal." "External,RealEstatePortal" {
+                url "http://localhost:3001/workspace/documentation#property-finder-portal"
+            }
+            bayut = softwareSystem "Bayut Portal" "Real estate listings portal." "External,RealEstatePortal" {
+                url "http://localhost:3001/workspace/documentation#bayut-portal"
+            }
+            allsopPortal = softwareSystem "Allsop & Allsop Portal" "Allsop real estate listings portal." "External,RealEstatePortal" {
+                url "http://localhost:3001/workspace/documentation#allsop--allsop-portal"
+            }
         }
 
-        salesforceAdapter = softwareSystem "Salesforce Adapter" "Pulls data from PACE and maps it to Salesforce data models." "External"
+        salesforceAdapter = softwareSystem "Salesforce Adapter" "Pulls data from PACE and maps it to Salesforce data models." "External" {
+            url "http://localhost:3001/workspace/documentation#salesforce-adapter"
+        }
 
         # ============================================================
         # INFRASTRUCTURE
@@ -59,14 +83,26 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
 
         group "PACE Sales and CRM Platform" {
             paceWeb = softwareSystem "PACE Web" "Pace Full-Stack Backend and Frontend Service for Applicant and Listing Management." "Ingemark" {
-                paceDb = container "Pace DB" "Primary transactional database." "PostgreSQL on Google Cloud SQL" "Database"
-                pace = container "PACE" "PACE Sales and CRM Platform." "Payload, Next.js"
+                url "http://localhost:3001/workspace/documentation#pace-web-containers"
+                paceDb = container "Pace DB" "Primary transactional database." "PostgreSQL on Google Cloud SQL" "Database" {
+                    url "http://localhost:3001/workspace/documentation#pace-db"
+                }
+                pace = container "PACE" "PACE Sales and CRM Platform." "Payload, Next.js" {
+                    url "http://localhost:3001/workspace/documentation#pace"
+                }
             }
 
             paceAiSuite = softwareSystem "PACE AI Suite" "PACE AI Suite. Provides AI capabilities, conversation analysis, transcript." "Ingemark" {
-                assistcraftDb = container "PACE AI DB" "Dedicated AI database." "PostgreSQL on Google Cloud SQL" "Database"
-                paceAiBackend = container "PACE AI Backend" "Main AI service, backend logic and agentic functionality." "Python, FastAPI"
-                mcpServer = container "MCP Servers" "MCP server with specific functionality used by AI agents." "Python, FastMCP"
+                url "http://localhost:3001/workspace/documentation#pace-ai-suite-containers"
+                assistcraftDb = container "PACE AI DB" "Dedicated AI database." "PostgreSQL on Google Cloud SQL" "Database" {
+                    url "http://localhost:3001/workspace/documentation#pace-ai-db"
+                }
+                paceAiBackend = container "PACE AI Backend" "Main AI service, backend logic and agentic functionality." "Python, FastAPI" {
+                    url "http://localhost:3001/workspace/documentation#pace-ai-backend"
+                }
+                mcpServer = container "MCP Servers" "MCP server with specific functionality used by AI agents." "Python, FastMCP" {
+                    url "http://localhost:3001/workspace/documentation#mcp-servers"
+                }
             }
         }
 
@@ -116,37 +152,76 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # ============================================================
 
         # Actors to containers
-        manager -> pace "Manager interface (INTF-USER-01)" "HTTPS/REST"
-        admin -> pace "Admin interface (INTF-USER-02)" "HTTPS/REST"
-        agent -> pace "Agent interface (INTF-USER-03)" "HTTPS/REST"
+        manager -> pace "Manager interface (INTF-USER-01)" "HTTPS/REST" {
+            url "http://localhost:3001/workspace/documentation#intf-user-01-%E2%80%94-manager-interface"
+        }
+        admin -> pace "Admin interface (INTF-USER-02)" "HTTPS/REST" {
+            url "http://localhost:3001/workspace/documentation#intf-user-02-%E2%80%94-admin-interface"
+        }
+        agent -> pace "Agent interface (INTF-USER-03)" "HTTPS/REST" {
+            url "http://localhost:3001/workspace/documentation#intf-user-03-%E2%80%94-agent-interface"
+        }
 
         # PACE internal
-        pace -> paceDb "Reads/writes data (INTF-DB-01)" "PostgreSQL Wire Protocol"
-        paceAiBackend -> assistcraftDb "Reads/writes AI data (INTF-DB-02)" "PostgreSQL Wire Protocol"
-        # Note: assistcraftDb variable name is a legacy identifier; displays as "PACE AI DB"
+        pace -> paceDb "Reads/writes data (INTF-DB-01)" "PostgreSQL Wire Protocol" {
+            url "http://localhost:3001/workspace/documentation#intf-db-01-%E2%80%94-pace-database-access"
+        }
+        paceAiBackend -> assistcraftDb "Reads/writes AI data (INTF-DB-02)" "PostgreSQL Wire Protocol" {
+            url "http://localhost:3001/workspace/documentation#intf-db-02-%E2%80%94-ai-database-access"
+        }
 
         # PACE <-> AI Backend
-        pace -> paceAiBackend "AI application request (INTF-AI-01)" "HTTP SSE"
-        paceAiBackend -> pace "Fetches schema and data (INTF-AI-02)" "HTTP REST"
+        pace -> paceAiBackend "AI application request (INTF-AI-01)" "HTTP SSE" {
+            url "http://localhost:3001/workspace/documentation#intf-ai-01-%E2%80%94-ai-application-request"
+        }
+        paceAiBackend -> pace "Fetches schema and data (INTF-AI-02)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-ai-02-%E2%80%94-schema-and-data-fetching"
+        }
 
         # AI Backend <-> MCP Servers
-        paceAiBackend -> mcpServer "AI agent communication (INTF-AI-04..0x)" "HTTP Streaming"
+        paceAiBackend -> mcpServer "AI agent communication (INTF-AI-04..0x)" "HTTP Streaming" {
+            url "http://localhost:3001/workspace/documentation#intf-ai-040x-%E2%80%94-ai-agent-to-mcp-communication"
+        }
 
         # AI Backend to LLM
-        paceAiBackend -> vertexAi "LLM inference and semantic search (INTF-AI-05)" "HTTP REST"
-        mcpServer -> pace "Fetch PACE data (INTF-AI-03)" "HTTP REST"
+        paceAiBackend -> vertexAi "LLM inference and semantic search (INTF-AI-05)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-ai-05-%E2%80%94-llm-inference-vertex-ai"
+        }
+        mcpServer -> pace "Fetch PACE data (INTF-AI-03)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-ai-03-%E2%80%94-mcp-data-retrieval"
+        }
 
         # PACE to external systems
-        pace -> googleIdentity "Identity Confirmation (INTF-AUTH-02)" "HTTP REST"
-        pace -> gmailApi "Send emails (INTF-PACE-03)" "HTTP REST"
-        pace -> googleCalendarApi "Calendar sync (INTF-PACE-08)" "HTTP REST, Webhooks"
-        pace -> whatsapp "WhatsApp messaging (INTF-PACE-07)" "HTTP REST"
-        pace -> allsopPortal "Publish listing (INTF-PACE-04)" "HTTP REST"
-        pace -> bayut "Publish listing (INTF-PACE-05)" "HTTP REST"
-        pace -> propertyFinder "Publish listing (INTF-PACE-06)" "HTTP REST"
-        pace -> callCenter "Softphone integration (INTF-PACE-01)" "iframe, WebRTC, REST Webhooks"
-        pace -> lookerStudio "Embedded analytics (INTF-PACE-02)" "iframe"
-        salesforceAdapter -> pace "Fetches PACE data (INTF-SF-01)" "HTTP REST"
+        pace -> googleIdentity "Identity Confirmation (INTF-AUTH-02)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-auth-02-%E2%80%94-google-identity-confirmation"
+        }
+        pace -> gmailApi "Send emails (INTF-PACE-03)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-03-%E2%80%94-gmail-email"
+        }
+        pace -> googleCalendarApi "Calendar sync (INTF-PACE-08)" "HTTP REST, Webhooks" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-08-%E2%80%94-google-calendar-viewings--scheduling"
+        }
+        pace -> whatsapp "WhatsApp messaging (INTF-PACE-07)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-07-%E2%80%94-whatsapp-messaging"
+        }
+        pace -> allsopPortal "Publish listing (INTF-PACE-04)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-04-%E2%80%94-allsop--allsop-portal-listing-publication"
+        }
+        pace -> bayut "Publish listing (INTF-PACE-05)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-05-%E2%80%94-bayut-listing-publication"
+        }
+        pace -> propertyFinder "Publish listing (INTF-PACE-06)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-06-%E2%80%94-property-finder-listing-publication"
+        }
+        pace -> callCenter "Softphone integration (INTF-PACE-01)" "iframe, WebRTC, REST Webhooks" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-01-%E2%80%94-call-center-softphone"
+        }
+        pace -> lookerStudio "Embedded analytics (INTF-PACE-02)" "iframe" {
+            url "http://localhost:3001/workspace/documentation#intf-pace-02-%E2%80%94-looker-studio-embedded-analytics"
+        }
+        salesforceAdapter -> pace "Fetches PACE data (INTF-SF-01)" "HTTP REST" {
+            url "http://localhost:3001/workspace/documentation#intf-sf-01-%E2%80%94-salesforce-adapter"
+        }
         salesforceAdapter -> salesforce "Synchronizes data" "REST API"
 
         # ============================================================
