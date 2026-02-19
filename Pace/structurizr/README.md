@@ -34,7 +34,7 @@ container paceWeb "PaceWebContainers" "..." {
     # PACE Web containers (expanded because paceWeb is the star)
     include pace paceDb
     # PACE AI containers (also expanded via explicit include)
-    include paceAiBackend mcpServer assistcraftDb
+    include paceAiBackend mcpServer assistcraftDb  # assistcraftDb displays as "PACE AI DB"
     # Everything else
     include manager admin agent ...
 }
@@ -114,7 +114,7 @@ All container-level relationships include interface IDs for traceability:
 | `INTF-USER-01..03` | Actor to PACE (Manager, Admin, Agent) |
 | `INTF-AUTH-02` | PACE to Google Identity |
 | `INTF-DB-01` | PACE to Pace DB |
-| `INTF-DB-02` | AI Backend to Assistcraft DB |
+| `INTF-DB-02` | AI Backend to PACE AI DB |
 | `INTF-AI-01` | PACE to AI Backend (SSE streaming) |
 | `INTF-AI-02` | AI Backend to PACE (schema fetch) |
 | `INTF-AI-03` | MCP Server to PACE (data fetch) |

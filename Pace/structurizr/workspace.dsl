@@ -16,13 +16,15 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # ============================================================
 
         group "Existing Allsopp CRM" {
-            lookerStudio = softwareSystem "Looker Studio" "Statistics tool integrated with Salesforce." "External,Deprecated"
             salesforce = softwareSystem "Salesforce CRM" "Handles KPIs and business logic synchronization." "External,Deprecated"
         }
 
         group "Google Workspace" {
             googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External,GoogleWorkspace"
             gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External,GoogleWorkspace"
+            googleCalendarApi = softwareSystem "Google Calendar API" "Agent calendar management — viewings, meetings, availability." "External,GoogleWorkspace"
+            lookerStudio = softwareSystem "Looker Studio" "Embedded analytics and KPI dashboards." "External,GoogleWorkspace"
+            vertexAi = softwareSystem "Vertex AI" "LLM inference and semantic search." "External,GoogleWorkspace"
         }
 
         group "Exotel" {
@@ -36,7 +38,7 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
             allsopPortal = softwareSystem "Allsop & Allsop Portal" "Allsop real estate listings portal." "External,RealEstatePortal"
         }
 
-        salesforceAdapter = softwareSystem "Salesforce Adapter" "Integrates with PACE to fetch relevant data and ensure Salesforce functionality remains consistent." "External,Deprecated"
+        salesforceAdapter = softwareSystem "Salesforce Adapter" "Pulls data from PACE and maps it to Salesforce data models." "External"
 
         # ============================================================
         # INFRASTRUCTURE
@@ -61,10 +63,10 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
                 pace = container "PACE" "PACE Sales and CRM Platform." "Payload, Next.js"
             }
 
-            paceAiSuite = softwareSystem "PACE AI Suite" "PACE AI Suite based on the AI Assistcraft proprietary platform. Provides AI capabilities, conversation analysis, transcript." "Ingemark" {
-                assistcraftDb = container "Assistcraft DB" "Dedicated AI database." "PostgreSQL on Google Cloud SQL" "Database"
-                paceAiBackend = container "PACE AI Backend" "Main AssistCraft service, backend logic and agentic functionality." "Python, FastAPI"
-                mcpServer = container "MCP Server" "MCP server with specific functionality used by AI agents." "Python, FastMCP"
+            paceAiSuite = softwareSystem "PACE AI Suite" "PACE AI Suite. Provides AI capabilities, conversation analysis, transcript." "Ingemark" {
+                assistcraftDb = container "PACE AI DB" "Dedicated AI database." "PostgreSQL on Google Cloud SQL" "Database"
+                paceAiBackend = container "PACE AI Backend" "Main AI service, backend logic and agentic functionality." "Python, FastAPI"
+                mcpServer = container "MCP Servers" "MCP server with specific functionality used by AI agents." "Python, FastMCP"
             }
         }
 
@@ -93,16 +95,18 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # ============================================================
 
         paceWeb -> paceAiSuite "AI & other data flow" "SSE, REST API"
+        paceAiSuite -> vertexAi "LLM inference and semantic search" "REST API"
         paceWeb -> googleIdentity "Identity Confirmation" "REST API"
 
         paceWeb -> gmailApi "Share Listings (email)" "REST API"
+        paceWeb -> googleCalendarApi "Viewings, meetings, availability" "REST API"
         paceWeb -> whatsapp "Share listings (WhatsApp)" "REST API"
         paceWeb -> propertyFinder "Publish listing to Property Finder" "REST API"
         paceWeb -> bayut "Publish listing to Bayut" "REST API"
         paceWeb -> allsopPortal "Publish listing to Allsop portal" "REST API"
         paceWeb -> callCenter "Softphone and backend integration" "REST API, WebSocket"
         salesforce -> paceWeb "Initial Data Migration (CSV import)" "Manual file import"
-        paceWeb -> lookerStudio "View statistics data (read-only)" "REST API"
+        paceWeb -> lookerStudio "Embedded analytics dashboards" "iframe"
 
         paceWeb -> salesforce "Salesforce fetches PACE data" "REST API"
         callCenter -> paceWeb "Real-time conversation stream" "WebSocket"
@@ -119,25 +123,30 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # PACE internal
         pace -> paceDb "Reads/writes data (INTF-DB-01)" "PostgreSQL Wire Protocol"
         paceAiBackend -> assistcraftDb "Reads/writes AI data (INTF-DB-02)" "PostgreSQL Wire Protocol"
+        # Note: assistcraftDb variable name is a legacy identifier; displays as "PACE AI DB"
 
         # PACE <-> AI Backend
-        pace -> paceAiBackend "AI streaming request (INTF-AI-01)" "HTTP SSE"
-        paceAiBackend -> pace "Fetches database schema (INTF-AI-02)" "HTTP REST"
+        pace -> paceAiBackend "AI application request (INTF-AI-01)" "HTTP SSE"
+        paceAiBackend -> pace "Fetches schema and data (INTF-AI-02)" "HTTP REST"
 
         # AI Backend <-> MCP Servers
         paceAiBackend -> mcpServer "AI agent communication (INTF-AI-04..0x)" "HTTP Streaming"
+
+        # AI Backend to LLM
+        paceAiBackend -> vertexAi "LLM inference and semantic search (INTF-AI-05)" "HTTP REST"
         mcpServer -> pace "Fetch PACE data (INTF-AI-03)" "HTTP REST"
 
         # PACE to external systems
         pace -> googleIdentity "Identity Confirmation (INTF-AUTH-02)" "HTTP REST"
         pace -> gmailApi "Send emails (INTF-PACE-03)" "HTTP REST"
+        pace -> googleCalendarApi "Calendar sync (INTF-PACE-08)" "HTTP REST, Webhooks"
         pace -> whatsapp "WhatsApp messaging (INTF-PACE-07)" "HTTP REST"
         pace -> allsopPortal "Publish listing (INTF-PACE-04)" "HTTP REST"
         pace -> bayut "Publish listing (INTF-PACE-05)" "HTTP REST"
         pace -> propertyFinder "Publish listing (INTF-PACE-06)" "HTTP REST"
-        pace -> callCenter "Softphone integration (INTF-PACE-01)" "HTTP REST, WebSocket"
-        pace -> lookerStudio "View statistics (INTF-PACE-02)" "HTTP REST"
-        pace -> salesforceAdapter "Salesforce integration (INTF-SF-01)" "HTTP REST"
+        pace -> callCenter "Softphone integration (INTF-PACE-01)" "iframe, WebRTC, REST Webhooks"
+        pace -> lookerStudio "Embedded analytics (INTF-PACE-02)" "iframe"
+        salesforceAdapter -> pace "Fetches PACE data (INTF-SF-01)" "HTTP REST"
         salesforceAdapter -> salesforce "Synchronizes data" "REST API"
 
         # ============================================================
@@ -154,7 +163,40 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
 
         supportTeam -> pagerDuty "Reacts to alerts"
         supportTeam -> gcpOperations "Monitors system"
+
+        # ============================================================
+        # DEPLOYMENT - Production
+        # ============================================================
+
+        deploymentEnvironment "Production" {
+            deploymentNode "Google Cloud Platform" "" "" "CloudProvider" {
+                deploymentNode "GKE Cluster" "" "Kubernetes" {
+                    deploymentNode "pace-web" "PACE Web namespace" "" {
+                        containerInstance pace
+                    }
+                    deploymentNode "pace-ai" "PACE AI Suite namespace" "" {
+                        containerInstance paceAiBackend
+                        containerInstance mcpServer
+                    }
+                    softwareSystemInstance argo
+                }
+                deploymentNode "Cloud SQL" "" "Google Cloud SQL" {
+                    containerInstance paceDb
+                    containerInstance assistcraftDb
+                }
+                softwareSystemInstance gcpOperations
+            }
+            deploymentNode "Atlassian Cloud" "" "" "CloudProvider" {
+                softwareSystemInstance bitbucket
+                softwareSystemInstance bitbucketPipelines
+            }
+            deploymentNode "PagerDuty" "" "" "CloudProvider" {
+                softwareSystemInstance pagerDuty
+            }
+        }
     }
+
+    !docs docs
 
     views {
         # ============================================================
@@ -177,18 +219,25 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
             # PACE AI containers
             include paceAiBackend mcpServer assistcraftDb
             # Actors
-            include manager admin agent developer supportTeam
+            include manager admin agent
             # External systems
-            include googleIdentity gmailApi whatsapp callCenter
+            include googleIdentity gmailApi googleCalendarApi whatsapp callCenter vertexAi
             include propertyFinder bayut allsopPortal
             include lookerStudio salesforce salesforceAdapter
-            # Infrastructure
-            include bitbucket bitbucketPipelines argo pagerDuty gcpOperations gcp
         }
 
         container paceAiSuite "PaceAiContainers" "L2 - PACE AI Suite Containers" {
             include *
             autoLayout
+        }
+
+        # ============================================================
+        # DEPLOYMENT VIEW
+        # ============================================================
+
+        deployment * "Production" "ProductionDeployment" "Production Deployment - Infrastructure & Runtime" {
+            include *
+            autoLayout lr
         }
 
         # ============================================================
