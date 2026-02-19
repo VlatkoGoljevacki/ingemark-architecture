@@ -17,7 +17,7 @@ The platform integrates with external services organized by domain:
 
 | Domain | Systems | Purpose |
 |---|---|---|
-| Google Workspace / Cloud | Google Identity Services, Gmail API, Google Calendar API, Looker Studio, Vertex AI | Authentication (SSO), email delivery, agent scheduling, embedded analytics, LLM inference |
+| Google Cloud | Google Identity Services, Gmail API, Google Calendar API, Looker Studio, Vertex AI | Authentication (SSO), email delivery, agent scheduling, embedded analytics, LLM inference |
 | Exotel | WhatsApp, Call Center | Applicant messaging and VoIP softphone |
 | Real Estate Portals | Property Finder, Bayut, Allsop & Allsop Portal | Listing publication and syndication |
 | Legacy CRM | Salesforce CRM, Salesforce Adapter | Data migration and backward compatibility (deprecated) |

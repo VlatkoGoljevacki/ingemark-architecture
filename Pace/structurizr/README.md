@@ -56,7 +56,7 @@ Since group boundaries don't render around external systems in container views, 
 
 | Group | Tag | Color | Hex |
 |---|---|---|---|
-| Google Workspace | `GoogleWorkspace` | Green | `#34A853` |
+| Google Services | `GoogleServices` | Green | `#34A853` |
 | Exotel | `Exotel` | Purple | `#7B1FA2` |
 | Real Estate Portals | `RealEstatePortal` | Deep Orange | `#E65100` |
 | Existing Allsopp CRM | `Deprecated` | Amber (70% opacity) | `#d4a017` |
@@ -126,4 +126,22 @@ All container-level relationships include interface IDs for traceability:
 | `INTF-PACE-05` | PACE to Bayut |
 | `INTF-PACE-06` | PACE to Property Finder |
 | `INTF-PACE-07` | PACE to WhatsApp |
-| `INTF-SF-01` | PACE to Salesforce Adapter |
+| `INTF-PACE-08` | PACE to Google Calendar API |
+| `INTF-AI-05` | AI Backend to Vertex AI |
+| `INTF-SF-01` | Salesforce Adapter to PACE |
+
+## PDF Export
+
+Structurizr has no built-in PDF export. Options for generating PDFs from this workspace:
+
+| Approach | Effort | How |
+|---|---|---|
+| **Browser print-to-PDF** | Low | Use Structurizr's "Export to offline HTML page" (top-right menu), open in Chrome, File > Print > Save as PDF. |
+| **Pandoc from markdown** | Low | Export diagrams as PNG first, replace `![](embed:Key)` with image paths, then run `pandoc docs/*.md -o pace-architecture.pdf`. |
+| **Puppeteer `page.pdf()`** | Medium | Script that opens Structurizr Lite in headless Chrome and calls `page.pdf()`. Renders diagrams inline. |
+| **docToolchain + Asciidoctor-PDF** | High | Full docs-as-code pipeline. Export diagrams via CLI, convert to AsciiDoc, produce styled PDF. Most professional result. |
+
+References:
+- [Structurizr documentation export](https://docs.structurizr.com/ui/documentation/export)
+- [structurizr/puppeteer](https://github.com/structurizr/puppeteer)
+- [docToolchain](https://doctoolchain.org/)

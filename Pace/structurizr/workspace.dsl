@@ -1,5 +1,7 @@
 workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
 
+    !identifiers hierarchical
+
     model {
         # ============================================================
         # ACTORS
@@ -21,20 +23,20 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
             }
         }
 
-        group "Google Workspace" {
-            googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External,GoogleWorkspace" {
+        group "Google Services" {
+            googleIdentity = softwareSystem "Google Identity Services" "Source of truth for authentication." "External,GoogleServices" {
                 url "http://localhost:3001/workspace/documentation#google-identity-services"
             }
-            gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External,GoogleWorkspace" {
+            gmailApi = softwareSystem "Gmail API" "Send emails as Agent or System." "External,GoogleServices" {
                 url "http://localhost:3001/workspace/documentation#gmail-api"
             }
-            googleCalendarApi = softwareSystem "Google Calendar API" "Agent calendar management — viewings, meetings, availability." "External,GoogleWorkspace" {
+            googleCalendarApi = softwareSystem "Google Calendar API" "Agent calendar management — viewings, meetings, availability." "External,GoogleServices" {
                 url "http://localhost:3001/workspace/documentation#google-calendar-api"
             }
-            lookerStudio = softwareSystem "Looker Studio" "Embedded analytics and KPI dashboards." "External,GoogleWorkspace" {
+            lookerStudio = softwareSystem "Looker Studio" "Embedded analytics and KPI dashboards." "External,GoogleServices" {
                 url "http://localhost:3001/workspace/documentation#looker-studio"
             }
-            vertexAi = softwareSystem "Vertex AI" "LLM inference and semantic search." "External,GoogleWorkspace" {
+            vertexAi = softwareSystem "Vertex AI" "LLM inference and semantic search." "External,GoogleServices" {
                 url "http://localhost:3001/workspace/documentation#vertex-ai"
             }
         }
@@ -110,21 +112,21 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # RELATIONSHIPS - Actors to Systems (Context level)
         # ============================================================
 
-        manager -> paceWeb "Manager interface"
-        googleIdentity -> manager "Single Sign On"
+        manager -> paceWeb "Manager interface" "HTTPS"
+        googleIdentity -> manager "Single Sign On" "OAuth 2.0"
 
-        admin -> paceWeb "Admin interface"
-        googleIdentity -> admin "Single Sign On"
+        admin -> paceWeb "Admin interface" "HTTPS"
+        googleIdentity -> admin "Single Sign On" "OAuth 2.0"
 
-        agent -> paceWeb "Agent interface"
-        googleIdentity -> agent "Single Sign On"
+        agent -> paceWeb "Agent interface" "HTTPS"
+        googleIdentity -> agent "Single Sign On" "OAuth 2.0"
 
-        developer -> paceWeb "Development"
-        developer -> paceAiSuite "Development"
-        developer -> bitbucket "Commits code"
+        developer -> paceWeb "Development" "HTTPS"
+        developer -> paceAiSuite "Development" "HTTPS"
+        developer -> bitbucket "Commits code" "Git, HTTPS"
 
-        supportTeam -> paceWeb "Monitors and supports"
-        supportTeam -> paceAiSuite "Monitors and supports"
+        supportTeam -> paceWeb "Monitors and supports" "HTTPS"
+        supportTeam -> paceAiSuite "Monitors and supports" "HTTPS"
 
         # ============================================================
         # RELATIONSHIPS - System level (Context diagram)
@@ -152,74 +154,74 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # ============================================================
 
         # Actors to containers
-        manager -> pace "Manager interface (INTF-USER-01)" "HTTPS/REST" {
+        manager -> paceWeb.pace "Manager interface (INTF-USER-01)" "HTTPS/REST" {
             url "http://localhost:3001/workspace/documentation#intf-user-01-%E2%80%94-manager-interface"
         }
-        admin -> pace "Admin interface (INTF-USER-02)" "HTTPS/REST" {
+        admin -> paceWeb.pace "Admin interface (INTF-USER-02)" "HTTPS/REST" {
             url "http://localhost:3001/workspace/documentation#intf-user-02-%E2%80%94-admin-interface"
         }
-        agent -> pace "Agent interface (INTF-USER-03)" "HTTPS/REST" {
+        agent -> paceWeb.pace "Agent interface (INTF-USER-03)" "HTTPS/REST" {
             url "http://localhost:3001/workspace/documentation#intf-user-03-%E2%80%94-agent-interface"
         }
 
         # PACE internal
-        pace -> paceDb "Reads/writes data (INTF-DB-01)" "PostgreSQL Wire Protocol" {
+        paceWeb.pace -> paceWeb.paceDb "Reads/writes data (INTF-DB-01)" "PostgreSQL Wire Protocol" {
             url "http://localhost:3001/workspace/documentation#intf-db-01-%E2%80%94-pace-database-access"
         }
-        paceAiBackend -> assistcraftDb "Reads/writes AI data (INTF-DB-02)" "PostgreSQL Wire Protocol" {
+        paceAiSuite.paceAiBackend -> paceAiSuite.assistcraftDb "Reads/writes AI data (INTF-DB-02)" "PostgreSQL Wire Protocol" {
             url "http://localhost:3001/workspace/documentation#intf-db-02-%E2%80%94-ai-database-access"
         }
 
         # PACE <-> AI Backend
-        pace -> paceAiBackend "AI application request (INTF-AI-01)" "HTTP SSE" {
+        paceWeb.pace -> paceAiSuite.paceAiBackend "AI application request (INTF-AI-01)" "HTTP SSE" {
             url "http://localhost:3001/workspace/documentation#intf-ai-01-%E2%80%94-ai-application-request"
         }
-        paceAiBackend -> pace "Fetches schema and data (INTF-AI-02)" "HTTP REST" {
+        paceAiSuite.paceAiBackend -> paceWeb.pace "Fetches schema and data (INTF-AI-02)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-ai-02-%E2%80%94-schema-and-data-fetching"
         }
 
         # AI Backend <-> MCP Servers
-        paceAiBackend -> mcpServer "AI agent communication (INTF-AI-04..0x)" "HTTP Streaming" {
+        paceAiSuite.paceAiBackend -> paceAiSuite.mcpServer "AI agent communication (INTF-AI-04..0x)" "HTTP Streaming" {
             url "http://localhost:3001/workspace/documentation#intf-ai-040x-%E2%80%94-ai-agent-to-mcp-communication"
         }
 
         # AI Backend to LLM
-        paceAiBackend -> vertexAi "LLM inference and semantic search (INTF-AI-05)" "HTTP REST" {
+        paceAiSuite.paceAiBackend -> vertexAi "LLM inference and semantic search (INTF-AI-05)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-ai-05-%E2%80%94-llm-inference-vertex-ai"
         }
-        mcpServer -> pace "Fetch PACE data (INTF-AI-03)" "HTTP REST" {
+        paceAiSuite.mcpServer -> paceWeb.pace "Fetch PACE data (INTF-AI-03)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-ai-03-%E2%80%94-mcp-data-retrieval"
         }
 
         # PACE to external systems
-        pace -> googleIdentity "Identity Confirmation (INTF-AUTH-02)" "HTTP REST" {
+        paceWeb.pace -> googleIdentity "Identity Confirmation (INTF-AUTH-02)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-auth-02-%E2%80%94-google-identity-confirmation"
         }
-        pace -> gmailApi "Send emails (INTF-PACE-03)" "HTTP REST" {
+        paceWeb.pace -> gmailApi "Send emails (INTF-PACE-03)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-pace-03-%E2%80%94-gmail-email"
         }
-        pace -> googleCalendarApi "Calendar sync (INTF-PACE-08)" "HTTP REST, Webhooks" {
+        paceWeb.pace -> googleCalendarApi "Calendar sync (INTF-PACE-08)" "HTTP REST, Webhooks" {
             url "http://localhost:3001/workspace/documentation#intf-pace-08-%E2%80%94-google-calendar-viewings--scheduling"
         }
-        pace -> whatsapp "WhatsApp messaging (INTF-PACE-07)" "HTTP REST" {
+        paceWeb.pace -> whatsapp "WhatsApp messaging (INTF-PACE-07)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-pace-07-%E2%80%94-whatsapp-messaging"
         }
-        pace -> allsopPortal "Publish listing (INTF-PACE-04)" "HTTP REST" {
+        paceWeb.pace -> allsopPortal "Publish listing (INTF-PACE-04)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-pace-04-%E2%80%94-allsop--allsop-portal-listing-publication"
         }
-        pace -> bayut "Publish listing (INTF-PACE-05)" "HTTP REST" {
+        paceWeb.pace -> bayut "Publish listing (INTF-PACE-05)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-pace-05-%E2%80%94-bayut-listing-publication"
         }
-        pace -> propertyFinder "Publish listing (INTF-PACE-06)" "HTTP REST" {
+        paceWeb.pace -> propertyFinder "Publish listing (INTF-PACE-06)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-pace-06-%E2%80%94-property-finder-listing-publication"
         }
-        pace -> callCenter "Softphone integration (INTF-PACE-01)" "iframe, WebRTC, REST Webhooks" {
+        paceWeb.pace -> callCenter "Softphone integration (INTF-PACE-01)" "iframe, WebRTC, REST Webhooks" {
             url "http://localhost:3001/workspace/documentation#intf-pace-01-%E2%80%94-call-center-softphone"
         }
-        pace -> lookerStudio "Embedded analytics (INTF-PACE-02)" "iframe" {
+        paceWeb.pace -> lookerStudio "Embedded analytics (INTF-PACE-02)" "iframe" {
             url "http://localhost:3001/workspace/documentation#intf-pace-02-%E2%80%94-looker-studio-embedded-analytics"
         }
-        salesforceAdapter -> pace "Fetches PACE data (INTF-SF-01)" "HTTP REST" {
+        salesforceAdapter -> paceWeb.pace "Fetches PACE data (INTF-SF-01)" "HTTP REST" {
             url "http://localhost:3001/workspace/documentation#intf-sf-01-%E2%80%94-salesforce-adapter"
         }
         salesforceAdapter -> salesforce "Synchronizes data" "REST API"
@@ -228,44 +230,44 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
         # RELATIONSHIPS - Infrastructure
         # ============================================================
 
-        bitbucket -> bitbucketPipelines "Detect changes and builds images"
-        bitbucket -> argo "Connects to CI/CD repository"
-        argo -> gcp "Deploys images"
-        gcpOperations -> pagerDuty "Creates alerts based on rules"
+        bitbucket -> bitbucketPipelines "Detect changes and builds images" "Git Webhook"
+        bitbucket -> argo "Connects to CI/CD repository" "Git"
+        argo -> gcp "Deploys images" "Kubernetes API"
+        gcpOperations -> pagerDuty "Creates alerts based on rules" "REST API"
 
-        developer -> bitbucketPipelines "Modifies CI scripts"
-        developer -> argo "Triggers deployments"
+        developer -> bitbucketPipelines "Modifies CI scripts" "YAML, HTTPS"
+        developer -> argo "Triggers deployments" "HTTPS"
 
-        supportTeam -> pagerDuty "Reacts to alerts"
-        supportTeam -> gcpOperations "Monitors system"
+        supportTeam -> pagerDuty "Reacts to alerts" "HTTPS"
+        supportTeam -> gcpOperations "Monitors system" "HTTPS"
 
         # ============================================================
         # DEPLOYMENT - Production
         # ============================================================
 
         deploymentEnvironment "Production" {
-            deploymentNode "Google Cloud Platform" "" "" "CloudProvider" {
-                deploymentNode "GKE Cluster" "" "Kubernetes" {
-                    deploymentNode "pace-web" "PACE Web namespace" "" {
-                        containerInstance pace
+            deploymentNode "Google Cloud Platform" "Primary cloud provider for all PACE services" "GCP" "CloudProvider" {
+                deploymentNode "GKE Cluster" "Managed Kubernetes cluster running PACE workloads" "Kubernetes" {
+                    deploymentNode "pace-web" "PACE Web namespace" "Kubernetes Namespace" {
+                        containerInstance paceWeb.pace
                     }
-                    deploymentNode "pace-ai" "PACE AI Suite namespace" "" {
-                        containerInstance paceAiBackend
-                        containerInstance mcpServer
+                    deploymentNode "pace-ai" "PACE AI Suite namespace" "Kubernetes Namespace" {
+                        containerInstance paceAiSuite.paceAiBackend
+                        containerInstance paceAiSuite.mcpServer
                     }
                     softwareSystemInstance argo
                 }
-                deploymentNode "Cloud SQL" "" "Google Cloud SQL" {
-                    containerInstance paceDb
-                    containerInstance assistcraftDb
+                deploymentNode "Cloud SQL" "Managed PostgreSQL database instances" "Google Cloud SQL" {
+                    containerInstance paceWeb.paceDb
+                    containerInstance paceAiSuite.assistcraftDb
                 }
                 softwareSystemInstance gcpOperations
             }
-            deploymentNode "Atlassian Cloud" "" "" "CloudProvider" {
+            deploymentNode "Atlassian Cloud" "Source control and CI/CD platform" "Atlassian" "CloudProvider" {
                 softwareSystemInstance bitbucket
                 softwareSystemInstance bitbucketPipelines
             }
-            deploymentNode "PagerDuty" "" "" "CloudProvider" {
+            deploymentNode "PagerDuty" "Incident management and alert routing" "PagerDuty SaaS" "CloudProvider" {
                 softwareSystemInstance pagerDuty
             }
         }
@@ -280,7 +282,7 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
 
         systemContext paceWeb "SystemContext" "L1 - System Context" {
             include *
-            include paceAiSuite
+            include paceAiSuite vertexAi
             exclude salesforceAdapter
         }
 
@@ -290,9 +292,9 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
 
         container paceWeb "PaceWebContainers" "L2 - PACE Platform Container Diagram" {
             # PACE Web containers
-            include pace paceDb
+            include paceWeb.pace paceWeb.paceDb
             # PACE AI containers
-            include paceAiBackend mcpServer assistcraftDb
+            include paceAiSuite.paceAiBackend paceAiSuite.mcpServer paceAiSuite.assistcraftDb
             # Actors
             include manager admin agent
             # External systems
@@ -354,7 +356,7 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
                 background #438dd5
                 color #ffffff
             }
-            element "GoogleWorkspace" {
+            element "GoogleServices" {
                 background #34A853
                 color #ffffff
             }
@@ -370,6 +372,18 @@ workspace "PACE Architecture" "Sales and CRM Platform for Allsop Real Estate" {
                 background #666666
                 color #ffffff
             }
+        }
+    }
+
+    configuration {
+        properties {
+            # This workspace intentionally covers two software systems (PACE Web + PACE AI Suite)
+            "structurizr.inspection.workspace.scope" "ignore"
+            # Infrastructure systems are only visible in the deployment view
+            "structurizr.inspection.model.element.noview" "ignore"
+            # Documentation and decisions are at workspace level, not per software system
+            "structurizr.inspection.model.softwaresystem.documentation" "ignore"
+            "structurizr.inspection.model.softwaresystem.decisions" "ignore"
         }
     }
 }

@@ -9,7 +9,7 @@
       "order" : 1,
       "title" : ""
     }, {
-      "content" : "# Container Architecture\n\n## Platform Composition\n\n![](embed:PaceWebContainers)\n\nThe PACE platform consists of two software systems:\n\n- **PACE Web** — The full-stack CRM and sales application (Payload + Next.js) with its primary PostgreSQL database.\n- **PACE AI Suite** — The AI subsystem providing conversation analysis, transcription, and agentic AI capabilities.\n\nThree user roles interact with the platform: **Manager**, **Admin**, and **Agent** — all Allsop employees authenticated via Google Identity (SSO).\n\n## External Integrations\n\nThe platform integrates with external services organized by domain:\n\n| Domain | Systems | Purpose |\n|---|---|---|\n| Google Workspace / Cloud | Google Identity Services, Gmail API, Google Calendar API, Looker Studio, Vertex AI | Authentication (SSO), email delivery, agent scheduling, embedded analytics, LLM inference |\n| Exotel | WhatsApp, Call Center | Applicant messaging and VoIP softphone |\n| Real Estate Portals | Property Finder, Bayut, Allsop & Allsop Portal | Listing publication and syndication |\n| Legacy CRM | Salesforce CRM, Salesforce Adapter | Data migration and backward compatibility (deprecated) |\n\n---\n\n## Components\n\n### PACE Web Containers\n\n#### PACE\n\n| | |\n|---|---|\n| **Technology** | Payload CMS, Next.js |\n| **Runtime** | Node.js on GKE (`pace-web` namespace) |\n| **Role** | Full-stack backend and frontend service |\n\nThe core application serving the web UI for all user roles. Payload CMS provides the backend with a headless API and admin UI, while Next.js handles server-side rendering and the agent-facing frontend. Responsible for applicant management, listing management, communication orchestration, and integration with all external systems.\n\n#### Pace DB\n\n| | |\n|---|---|\n| **Technology** | PostgreSQL on Google Cloud SQL |\n| **Role** | Primary transactional database |\n\nStores all business data: applicants, listings, user accounts, configurations, communication logs, and portal syndication state. Managed by Google Cloud SQL with automated backups and high availability.\n\n### PACE AI Suite Containers\n\n#### PACE AI Backend\n\n| | |\n|---|---|\n| **Technology** | Python, FastAPI |\n| **Runtime** | Python on GKE (`pace-ai` namespace) |\n| **Role** | Main AI service with agentic functionality |\n\nThe central AI service. Handles AI conversation processing, transcript analysis, and agentic workflows. Streams responses back to PACE via SSE. Fetches the PACE database schema to generate context-aware queries. Orchestrates MCP tool calls for specialized operations.\n\n#### MCP Servers\n\n| | |\n|---|---|\n| **Technology** | Python, FastMCP |\n| **Runtime** | Python on GKE (`pace-ai` namespace) |\n| **Role** | Tool servers for AI agents |\n\nModel Context Protocol servers that expose specialized tools to the AI backend. Each MCP server provides domain-specific functions (e.g., fetching listings, querying applicant data) that AI agents can invoke during agentic workflows. Communicates with PACE via REST to retrieve business data.\n\n#### PACE AI DB\n\n| | |\n|---|---|\n| **Technology** | PostgreSQL on Google Cloud SQL |\n| **Role** | Dedicated AI database |\n\nStores AI-specific data: conversation histories, transcripts, agent execution state, and embeddings. Isolated from the main PACE DB to maintain separation of concerns between the CRM and AI subsystems.\n\n### External Systems\n\n#### Google Identity Services\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | OAuth 2.0 / OpenID Connect |\n| **Role** | Source of truth for authentication |\n\nAll Allsop employees authenticate via Google SSO. PACE delegates identity verification to Google Identity Services and does not manage credentials directly.\n\n#### Gmail API\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | Google Gmail REST API |\n| **Role** | Email delivery |\n\nUsed to send emails on behalf of agents or as system notifications. Listing share emails, applicant correspondence, and automated notifications are dispatched through the Gmail API using delegated credentials.\n\n#### Google Calendar API\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | Google Calendar REST API + Push Notifications (Webhooks) |\n| **Role** | Agent calendar management |\n\nManages agent calendars for property viewings, meeting bookings, and availability tracking. PACE uses Google Calendar as the source of truth for all calendar functionality (scheduling, conflict detection, reminders, attendee notifications). Applicants are notified of viewings via email through Google Calendar's built-in notification system. PACE maintains a custom wrapper layer with its own database records for viewing-specific metadata (viewing details, applicant/agent associations, status tracking) that Google Calendar does not natively support.\n\n#### Vertex AI\n\n| | |\n|---|---|\n| **Provider** | Google Cloud |\n| **Protocol** | Vertex AI REST API |\n| **Role** | LLM inference and embedding services |\n\nGoogle's managed AI platform used by the PACE AI Backend for LLM inference and semantic search. The AI backend maintains its own vectorized knowledge database and handles embeddings internally — Vertex AI provides the language model capabilities (text generation, reasoning, conversation analysis) that operate on top of that vector store. The LLM dependency is isolated behind the AI backend — PACE Web does not call Vertex AI directly.\n\n#### WhatsApp\n\n| | |\n|---|---|\n| **Provider** | Exotel |\n| **Protocol** | WhatsApp Business API (REST) |\n| **Role** | Applicant messaging |\n\nEnables agents to communicate with applicants via WhatsApp. Messages are sent through Exotel's WhatsApp Business API integration. Used for listing shares, follow-ups, and applicant communication.\n\n#### Call Center\n\n| | |\n|---|---|\n| **Provider** | Exotel |\n| **Protocol** | REST API + WebSocket |\n| **Role** | VoIP softphone and call streaming |\n\nProvides softphone capabilities embedded in the PACE UI. Agents can make and receive calls directly from the platform. Real-time call events and audio streams are delivered via WebSocket for live call tracking and recording.\n\n#### Property Finder Portal\n\n| | |\n|---|---|\n| **Provider** | Property Finder |\n| **Protocol** | REST API |\n| **Role** | Listing syndication |\n\nUAE real estate listings portal. PACE publishes and syncs property listings to Property Finder, maintaining listing status, pricing, and media assets.\n\n#### Bayut Portal\n\n| | |\n|---|---|\n| **Provider** | Bayut (Dubizzle Group) |\n| **Protocol** | REST API |\n| **Role** | Listing syndication |\n\nUAE real estate listings portal. PACE publishes and syncs property listings to Bayut, maintaining listing status, pricing, and media assets.\n\n#### Allsop & Allsop Portal\n\n| | |\n|---|---|\n| **Provider** | Allsop & Allsop |\n| **Protocol** | REST API |\n| **Role** | Company listing portal |\n\nAllsop's own real estate listings website. PACE publishes listings directly to the company portal, ensuring the public-facing website stays in sync with the CRM.\n\n#### Looker Studio\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | Embedded iframe |\n| **Role** | Embedded analytics and KPI dashboards |\n\nGoogle's data visualization tool embedded in PACE as an iframe. Provides agents and managers with analytics dashboards and KPI reports without leaving the platform.\n\n#### Salesforce CRM (Deprecated)\n\n| | |\n|---|---|\n| **Provider** | Salesforce |\n| **Protocol** | REST API / CSV import |\n| **Role** | Legacy CRM |\n| **Status** | **Deprecated** — data migration source only |\n\nThe previous CRM system. Historical data was migrated to PACE via CSV import.\n\n#### Salesforce Adapter\n\n| | |\n|---|---|\n| **Protocol** | REST API |\n| **Role** | Salesforce data synchronization |\n\nA service managed by the Salesforce/Allsop side that pulls data from PACE's REST APIs and maps it to Salesforce's own data models. PACE has no knowledge of or dependency on the Salesforce schema — it simply exposes APIs that the adapter consumes.\n\n---\n\n## Interface Catalog\n\nAll container-level interfaces on the PACE Container Diagram, organized by domain.\n\n| ID | Interface | From | To | Protocol |\n|---|---|---|---|---|\n| [INTF-USER-01](#intf-user-01-%E2%80%94-manager-interface) | Manager Interface | Manager | PACE | HTTPS/REST |\n| [INTF-USER-02](#intf-user-02-%E2%80%94-admin-interface) | Admin Interface | Admin | PACE | HTTPS/REST |\n| [INTF-USER-03](#intf-user-03-%E2%80%94-agent-interface) | Agent Interface | Agent | PACE | HTTPS/REST |\n| [INTF-AUTH-02](#intf-auth-02-%E2%80%94-google-identity-confirmation) | Google Identity Confirmation | PACE | Google Identity Services | HTTP REST (OAuth 2.0) |\n| [INTF-DB-01](#intf-db-01-%E2%80%94-pace-database-access) | PACE Database Access | PACE | Pace DB | PostgreSQL Wire Protocol |\n| [INTF-DB-02](#intf-db-02-%E2%80%94-ai-database-access) | AI Database Access | PACE AI Backend | PACE AI DB | PostgreSQL Wire Protocol |\n| [INTF-AI-01](#intf-ai-01-%E2%80%94-ai-application-request) | AI Application Request | PACE | PACE AI Backend | HTTP SSE |\n| [INTF-AI-02](#intf-ai-02-%E2%80%94-schema-and-data-fetching) | Schema and Data Fetching | PACE AI Backend | PACE | HTTP REST |\n| [INTF-AI-03](#intf-ai-03-%E2%80%94-mcp-data-retrieval) | MCP Data Retrieval | MCP Servers | PACE | HTTP REST |\n| [INTF-AI-04..0x](#intf-ai-040x-%E2%80%94-ai-agent-to-mcp-communication) | AI Agent to MCP Communication | PACE AI Backend | MCP Servers | HTTP Streaming |\n| [INTF-AI-05](#intf-ai-05-%E2%80%94-llm-inference-vertex-ai) | LLM Inference (Vertex AI) | PACE AI Backend | Vertex AI | HTTP REST |\n| [INTF-PACE-01](#intf-pace-01-%E2%80%94-call-center-softphone) | Call Center (Softphone) | PACE | Call Center (Exotel) | iframe, WebRTC, REST |\n| [INTF-PACE-02](#intf-pace-02-%E2%80%94-looker-studio-embedded-analytics) | Looker Studio (Embedded Analytics) | PACE | Looker Studio | iframe |\n| [INTF-PACE-03](#intf-pace-03-%E2%80%94-gmail-email) | Gmail (Email) | PACE | Gmail API | HTTP REST |\n| [INTF-PACE-04](#intf-pace-04-%E2%80%94-allsop--allsop-portal-listing-publication) | Allsop & Allsop Portal (Listing Publication) | PACE | Allsop & Allsop Portal | TBD |\n| [INTF-PACE-05](#intf-pace-05-%E2%80%94-bayut-listing-publication) | Bayut (Listing Publication) | PACE | Bayut Portal | XML Feed / REST |\n| [INTF-PACE-06](#intf-pace-06-%E2%80%94-property-finder-listing-publication) | Property Finder (Listing Publication) | PACE | Property Finder Portal | HTTP REST (OAuth 2.0) |\n| [INTF-PACE-07](#intf-pace-07-%E2%80%94-whatsapp-messaging) | WhatsApp (Messaging) | PACE | WhatsApp (Exotel) | HTTP REST |\n| [INTF-PACE-08](#intf-pace-08-%E2%80%94-google-calendar-viewings--scheduling) | Google Calendar (Viewings & Scheduling) | PACE | Google Calendar API | HTTP REST, Webhooks |\n| [INTF-SF-01](#intf-sf-01-%E2%80%94-salesforce-adapter) | Salesforce Adapter | Salesforce Adapter | PACE | HTTP REST |\n\n### User Interfaces\n\n#### INTF-USER-01 — Manager Interface\n\n| | |\n|---|---|\n| **From** | Manager |\n| **To** | PACE |\n| **Protocol** | HTTPS / REST |\n| **Authentication** | Google SSO (INTF-AUTH-02) |\n| **Data** | KPI dashboards, team performance, approval workflows, listing oversight |\n\nWeb UI access for the Manager role. Managers oversee agent performance, approve workflows, and view business KPIs and statistics.\n\n#### INTF-USER-02 — Admin Interface\n\n| | |\n|---|---|\n| **From** | Admin |\n| **To** | PACE |\n| **Protocol** | HTTPS / REST |\n| **Authentication** | Google SSO (INTF-AUTH-02) |\n| **Data** | System configuration, user management, data administration, portal settings |\n\nWeb UI access for the Admin role. Admins configure system settings, manage user accounts and roles, administer reference data, and configure portal integrations.\n\n#### INTF-USER-03 — Agent Interface\n\n| | |\n|---|---|\n| **From** | Agent |\n| **To** | PACE |\n| **Protocol** | HTTPS / REST |\n| **Authentication** | Google SSO (INTF-AUTH-02) |\n| **Data** | Applicant records, listing management, communication tools, AI assistant, softphone |\n\nWeb UI access for the Agent role. Agents manage applicants and listings, communicate with applicants via email/WhatsApp/phone, and use the AI assistant for conversation analysis and data queries.\n\n### Authentication\n\n#### INTF-AUTH-02 — Google Identity Confirmation\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Google Identity Services |\n| **Protocol** | HTTP REST (OAuth 2.0 / OpenID Connect) |\n| **Data** | ID tokens, access tokens, user profile claims (email, name, domain) |\n\nPACE delegates all authentication to Google Identity Services. On login, the browser redirects to Google's OAuth consent flow. PACE validates the returned ID token and establishes a session. No credentials are stored in PACE — Google is the single source of truth for identity.\n\n### Database Interfaces\n\n#### INTF-DB-01 — PACE Database Access\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Pace DB |\n| **Protocol** | PostgreSQL Wire Protocol (TCP 5432) |\n| **Data** | Applicants, listings, users, configurations, communication logs, portal state |\n\nPrimary data path for all PACE business operations. Payload CMS manages the schema and ORM layer. Connection pooling is handled at the application level. The database is hosted on Cloud SQL with private IP access within the GCP VPC.\n\n#### INTF-DB-02 — AI Database Access\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | PACE AI DB |\n| **Protocol** | PostgreSQL Wire Protocol (TCP 5432) |\n| **Data** | Conversations, transcripts, agent execution state, embeddings |\n\nDedicated data path for the AI subsystem. Isolated from the main PACE DB to maintain separation between CRM and AI concerns. Hosted on Cloud SQL with private IP access within the GCP VPC.\n\n### AI Integration\n\n#### INTF-AI-01 — AI Application Request\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | PACE AI Backend |\n| **Protocol** | HTTP SSE (Server-Sent Events) |\n| **Data** | Input data for embedding/search, query parameters → search results, next best steps, AI-generated recommendations |\n\nThe primary communication channel between PACE and the AI backend. PACE sends input data (text for embedding, search queries, conversation data for analysis) and receives streamed results via SSE — including semantic search results, next best step recommendations, and AI-processed outputs. The AI backend orchestrates the processing internally, calling Vertex AI (INTF-AI-05) for LLM inference and embeddings as needed. PACE does not interact with the LLM directly.\n\n#### INTF-AI-05 — LLM Inference (Vertex AI)\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | Vertex AI |\n| **Protocol** | HTTP REST (Google Vertex AI API) |\n| **Data** | Prompts, model parameters → generated text, semantic search results, token streams |\n\nThe LLM inference layer. PACE AI Backend calls Vertex AI for language model operations: text generation, semantic search, conversation analysis, and agentic reasoning. The AI backend maintains its own vectorized knowledge database and handles embeddings internally — Vertex AI is used for LLM inference and semantic search capabilities that operate on top of that vector store. The AI backend constructs prompts with context from PACE data (INTF-AI-02) and MCP tool results (INTF-AI-04), sends them to Vertex AI, and processes the model output before returning application-level results to PACE (INTF-AI-01). This interface isolates the LLM dependency — switching models or providers only requires changes in the AI backend, not in PACE.\n\n#### INTF-AI-02 — Schema and Data Fetching\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | PACE |\n| **Protocol** | HTTP REST |\n| **Data** | Database schema definitions, field metadata, entity relationships, business data (applicants, listings, etc.) |\n\nThe AI backend fetches both schema and business data from PACE via REST APIs. Schema retrieval enables context-aware query generation — the AI understands the data model without hardcoded knowledge. Business data retrieval provides the AI with real-time CRM data (applicants, listings, activities, etc.) needed for conversation context, analysis, and agentic workflows. All data the PACE AI Suite needs from PACE Web flows through this REST interface — there is no direct database access between the two systems.\n\n#### INTF-AI-03 — MCP Data Retrieval\n\n| | |\n|---|---|\n| **From** | MCP Servers |\n| **To** | PACE |\n| **Protocol** | HTTP REST |\n| **Data** | Business data (listings, applicants, configurations) scoped to the AI agent's request |\n\nMCP tool servers fetch business data from PACE on behalf of AI agents. When an agent needs real-time data (e.g., \"show me listings in Dubai Marina\"), the MCP server calls PACE's API to retrieve the relevant records and returns them as tool results.\n\n#### INTF-AI-04..0x — AI Agent to MCP Communication\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | MCP Servers |\n| **Protocol** | HTTP Streaming (MCP over HTTP) |\n| **Data** | Tool invocations (function name, arguments) → tool results (structured data) |\n\nThe agentic communication channel. The AI backend orchestrates tool calls by streaming requests to MCP servers. Each MCP server exposes domain-specific tools (e.g., listing search, applicant lookup, data aggregation). The `..0x` suffix indicates the interface scales with additional MCP servers as new tools are added.\n\n### External System Integrations\n\n#### INTF-PACE-01 — Call Center (Softphone)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Call Center (Exotel) |\n| **Protocol** | Omni Toolbar SDK (iframe + JS events) + WebRTC (voice) + HTTP REST (webhooks) |\n| **Data** | Call events, interaction lifecycle, agent state, disposition codes, CRM record mapping |\n\nExotel's contact center is embedded in PACE using the **CRM Integration (Iframe Model)** — a loosely-coupled approach where the Omni Toolbar runs independently inside an iframe and communicates with PACE exclusively via events. PACE remains the source of truth for navigation and data; the toolbar handles all telephony concerns.\n\n**Embedding:** The PACE frontend hosts a `<div id=\"ameyoIframeDiv\">` container. The toolbar loads from `https://<eccDomain>/omniapp/toolbar/index.html` and is initialized with a lightweight JS SDK:\n\n```javascript\nsdk.initialize({ context: \"crm\", origin: \"https://<pace_domain>\", instanceId: \"ameyoIframe\" });\n```\n\n**Integration layers:**\n\n1. **Iframe + Event-Driven SDK (UI + Control)** — The toolbar runs independently inside the iframe and communicates with PACE through defined events. The interaction lifecycle is: toolbar initializes → agent logs in → interaction arrives → toolbar emits event → PACE reacts (screen pop, data fetch) → agent completes work → toolbar emits wrap-up event. Core integration points:\n   - **SSO/Login**: `login` / `forceLogin` — PACE authenticates the agent into the toolbar\n   - **Click-to-Dial**: `initiateInteraction()` — PACE triggers outbound calls with applicant data\n   - **Screen Pop**: `showCrm` event — toolbar notifies PACE of incoming call, PACE looks up the applicant record\n   - **Disposition**: `disposeInteraction()` — PACE sends wrap-up data (disposition code, notes) after call ends\n2. **WebRTC (Voice)** — Voice calls are handled via WebRTC within the iframe. Audio is peer-to-peer between the agent's browser and Exotel's infrastructure — PACE does not process or route audio directly.\n3. **REST Webhooks (Backend Events)** — Call events are pushed from Exotel to PACE's backend via REST webhooks. This allows PACE to log call activity, associate calls with applicant records, and trigger workflows independently of the frontend SDK events.\n\n**SSO / Authentication:** The Omni Toolbar uses a CRM-initiated login model — not token-based SSO. PACE authenticates the agent into the toolbar by calling `sdk.login({ username, password })` with the agent's Ameyo credentials after the agent logs into PACE via Google SSO. User IDs must match between PACE and Ameyo. `sdk.forceLogin()` is available to override an existing session (e.g., agent left logged in elsewhere). Session teardown via `sdk.logout()`.\n\n> **Architectural consideration:** This model requires PACE to store or derive Ameyo credentials per agent, since actual username/password are passed through the SDK (no OAuth/JWT token exchange). Credentials must be stored encrypted with appropriate access controls. Alternatively, investigate whether Exotel supports a token-based or API-key-based authentication flow for programmatic login to avoid credential storage.\n\n**Prerequisites:** Ameyo user accounts provisioned with matching PACE user IDs, SDK initialization with CRM context and origin.\n\n**Reference:** [Exotel Omni Toolbar](https://docs.exotel.com/harmony/omni-toolbar)\n\n#### INTF-PACE-02 — Looker Studio (Embedded Analytics)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Looker Studio |\n| **Protocol** | Embedded iframe |\n| **Data** | Statistics dashboards, KPI reports (read-only, view mode only) |\n\nLooker Studio (free version) reports are embedded in the PACE UI as iframes, providing agents and managers with analytics dashboards without leaving the platform.\n\n**Embedding:** Reports are loaded via `https://lookerstudio.google.com/embed/reporting/<REPORT_ID>/page/<PAGE_ID>` inside an iframe. Reports render in view-only mode with interactive filters and date controls. A Looker Studio watermark is always present (cannot be removed in the free version).\n\n**Access control options (to be decided):**\n\n| Approach | Security | Complexity | Notes |\n|---|---|---|---|\n| **Google Workspace domain restriction** | Medium | Low | Restrict report sharing to the Allsop Google Workspace domain. Works because all users already authenticate via Google SSO (INTF-AUTH-02). Coarse-grained — all-or-nothing, no per-role data filtering. |\n| **URL parameters for filtering** | Low | Low | PACE dynamically generates embed URLs with user/role-specific filter params. Params are visible in the DOM and can be manipulated by users — **not suitable for data isolation**. |\n| **Community Connector + token** | High | High | PACE generates a short-lived signed token (e.g., JWT) per user, passed via the embed URL's `config` param. A custom Community Connector validates the token against PACE's backend and returns only authorized data. Most secure, but requires building and maintaining a custom connector. |\n\n> **Recommendation:** Start with Google Workspace domain restriction (all Allsop employees can view). If per-role data filtering is needed later, evaluate the Community Connector + token approach. URL parameters should only be used as a UX convenience (default view), never as a security boundary.\n\n#### INTF-PACE-03 — Gmail (Email)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Gmail API |\n| **Protocol** | HTTP REST (Google Gmail API) |\n| **Data** | Email messages (to, from, subject, body, attachments), listing share payloads |\n\nSends emails through the Gmail API using delegated credentials. Used for listing share emails to applicants, system notifications, and agent-initiated correspondence. Emails are sent as the agent's Google Workspace identity.\n\n#### INTF-PACE-04 — Allsop & Allsop Portal (Listing Publication)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Allsop & Allsop Portal |\n| **Protocol** | TBD |\n| **Data** | Listing details (title, description, pricing, location, media assets, status) |\n| **Status** | **Integration path under investigation** |\n\nAllsop & Allsop's website is the company's public-facing property listings portal. It is not a third-party marketplace — it is Allsop's own brokerage site. The portal currently sources its listing data from Salesforce (Propertybase), not from PACE directly.\n\nAs PACE replaces Salesforce as the primary CRM, the portal data path needs to be resolved. Two options are under consideration:\n\n1. **PACE → Salesforce Adapter → Propertybase → Portal** — Continue syncing listing data to Propertybase via the Salesforce Adapter (INTF-SF-01), and the portal continues reading from Salesforce as it does today. This preserves the existing portal integration but adds latency and maintains a dependency on the deprecated Salesforce pipeline.\n2. **PACE → Portal (direct)** — The portal reads listing data directly from PACE via a new API. This removes the Salesforce dependency but requires changes to the portal's data source.\n\n> **Action required**: Confirm with the Allsop portal team which integration path will be used. This interface definition will be updated once the approach is decided.\n\n#### INTF-PACE-05 — Bayut (Listing Publication)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Bayut Portal |\n| **Protocol** | XML Feed Syndication (current) / REST API (under investigation) |\n| **Data** | Listing details (title, description, pricing, location, media assets, status) |\n\nSyncs property listings to Bayut (Dubizzle Group).\n\n**Current integration model — XML Feed Syndication (pull):** PACE generates and hosts an XML feed at a publicly accessible URL. Bayut's system periodically pulls this feed to sync listing data. Listings are created, updated, or removed implicitly through feed content changes. This is Bayut's established integration model used by most CRM platforms.\n\n**Potential REST API (push) — under investigation:** Bayut has reportedly introduced REST API functionality for listing management. If confirmed, this would allow PACE to push listing create/update/unpublish operations directly via API calls, similar to the Property Finder Enterprise API (INTF-PACE-06). This would provide real-time sync and explicit operation control compared to the feed-based approach.\n\n> **Action required**: Investigate whether Bayut's REST API is available for listing management and evaluate migration from XML feed to REST push.\n\n#### INTF-PACE-06 — Property Finder (Listing Publication)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Property Finder Portal |\n| **Protocol** | HTTP REST (Enterprise API, OAuth 2.0 / JWT) |\n| **Data** | Listing details (title, description, pricing, location, media assets, status), webhook events |\n\nPublishes and syncs property listings to Property Finder via their Enterprise API. Supports the full listing lifecycle: create (draft), update, publish, and unpublish. Authentication uses OAuth 2.0 with API Key + Secret, producing JWT bearer tokens. Property Finder also provides webhooks for event notifications (publication status, lead assignments). Supports create, update, and unpublish operations for listing syndication.\n\n#### INTF-PACE-07 — WhatsApp (Messaging)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | WhatsApp (Exotel) |\n| **Protocol** | HTTP REST (WhatsApp Business API via Exotel) |\n| **Data** | Template messages (carousel + standard), delivery status, incoming replies |\n\nSends WhatsApp messages to applicants through Exotel's WhatsApp Business API. Primary use case is sharing property listings with applicants.\n\n**Messaging model:**\n\nWhatsApp is architecturally a two-way platform — there is no \"notification-only\" mode that prevents recipients from replying. However, template messages function as effective one-way notifications:\n\n- **Business-initiated (outbound):** PACE sends a pre-approved template message. If the recipient does not reply, no conversation window opens and no further interaction occurs.\n- **Customer-initiated (inbound):** If a recipient replies, a 24-hour Customer Service Window (CSW) opens during which PACE can send free-form messages. After 24h, only template messages can be sent again.\n- **Billing:** Per-message pricing (since July 2025) — each template message is billed individually. Free-form messages within an active CSW are free.\n\n**Template types for listing shares:**\n\n| Template | Use case | Constraints |\n|---|---|---|\n| **Carousel template** | 2–10 listings | 2–10 cards, each with 1 image (1125x600px recommended), 160-char body, up to 2 buttons (URL/quick reply). Image, body text, and button URL are parameterized per card. |\n| **Standard media template** | Single listing | 1 header image, up to 1024-char body with variables, up to 3 buttons. |\n\nPACE needs both template types: a carousel for multi-listing shares and a standard media template for single-listing shares (carousel minimum is 2 cards).\n\n**Broadcast (one-to-many):**\n\nPACE can send the same template to multiple applicants. There is no native batch endpoint — each recipient requires an individual API call (`POST /messages`). Each recipient is fully independent (own conversation window, own billing). Default throughput: ~80 messages/second.\n\n| Messaging tier | Unique contacts per 24h |\n|---|---|\n| Tier 1 (new) | 1,000 |\n| Tier 2 | 10,000 |\n| Tier 3 | 100,000 |\n| Tier 4 (verified) | Unlimited |\n\nTiers upgrade automatically based on volume and quality rating. Since October 2025, limits apply at the business portfolio level, not per phone number.\n\n> **Note:** If PACE does not intend to handle inbound replies, implement an application-level strategy (e.g., auto-reply with \"this number does not accept replies\" or silently ignore incoming messages).\n\n#### INTF-PACE-08 — Google Calendar (Viewings & Scheduling)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Google Calendar API |\n| **Protocol** | HTTP REST (Google Calendar API v3) + Push Notifications (Webhooks) |\n| **Data** | Calendar events (viewings, meetings), agent availability, attendee lists, extended properties |\n\nBidirectional integration with Google Calendar for managing agent schedules, property viewings, and meeting bookings.\n\n**PACE → Google Calendar (outbound):**\n- Create/update/delete calendar events on agent calendars (viewings, meetings)\n- Check agent availability (freebusy queries) for scheduling\n- Events include extended properties for PACE-specific metadata (viewing ID, listing reference, applicant reference)\n- Applicants are added as event attendees — Google Calendar handles sending email invitations and reminders to them automatically\n\n**Google Calendar → PACE (inbound):**\n- Push notifications (webhooks) via watch channels notify PACE when events are created, modified, or deleted on the agent's calendar (e.g., agent reschedules directly in Google Calendar)\n- PACE syncs the change back to its own database to keep wrapper records consistent\n\n**PACE wrapper layer:**\nPACE maintains its own records in Pace DB (INTF-DB-01) for viewing-specific data that Google Calendar does not natively support: viewing details, applicant/agent associations across multiple viewings, viewing status tracking, and aggregate views (e.g., all appointments for a given applicant or agent). The calendar UI in PACE uses a React calendar component with this combined data.\n\n**Authentication:** Uses Google Workspace service account with domain-wide delegation, or per-agent OAuth consent, to access agent calendars.\n\n#### INTF-SF-01 — Salesforce Adapter\n\n| | |\n|---|---|\n| **From** | Salesforce Adapter |\n| **To** | PACE |\n| **Protocol** | HTTP REST |\n| **Data** | CRM records (applicants, listings, activities) |\n\nPACE exposes REST APIs that the Salesforce Adapter consumes. The adapter pulls data from PACE and handles all mapping to Salesforce's own data models — PACE has no knowledge of or dependency on the Salesforce schema. The direction of responsibility is: PACE provides the data, Salesforce takes care of fetching and transforming it.\n",
+      "content" : "# Container Architecture\n\n## Platform Composition\n\n![](embed:PaceWebContainers)\n\nThe PACE platform consists of two software systems:\n\n- **PACE Web** — The full-stack CRM and sales application (Payload + Next.js) with its primary PostgreSQL database.\n- **PACE AI Suite** — The AI subsystem providing conversation analysis, transcription, and agentic AI capabilities.\n\nThree user roles interact with the platform: **Manager**, **Admin**, and **Agent** — all Allsop employees authenticated via Google Identity (SSO).\n\n## External Integrations\n\nThe platform integrates with external services organized by domain:\n\n| Domain | Systems | Purpose |\n|---|---|---|\n| Google Cloud | Google Identity Services, Gmail API, Google Calendar API, Looker Studio, Vertex AI | Authentication (SSO), email delivery, agent scheduling, embedded analytics, LLM inference |\n| Exotel | WhatsApp, Call Center | Applicant messaging and VoIP softphone |\n| Real Estate Portals | Property Finder, Bayut, Allsop & Allsop Portal | Listing publication and syndication |\n| Legacy CRM | Salesforce CRM, Salesforce Adapter | Data migration and backward compatibility (deprecated) |\n\n---\n\n## Components\n\n### PACE Web Containers\n\n#### PACE\n\n| | |\n|---|---|\n| **Technology** | Payload CMS, Next.js |\n| **Runtime** | Node.js on GKE (`pace-web` namespace) |\n| **Role** | Full-stack backend and frontend service |\n\nThe core application serving the web UI for all user roles. Payload CMS provides the backend with a headless API and admin UI, while Next.js handles server-side rendering and the agent-facing frontend. Responsible for applicant management, listing management, communication orchestration, and integration with all external systems.\n\n#### Pace DB\n\n| | |\n|---|---|\n| **Technology** | PostgreSQL on Google Cloud SQL |\n| **Role** | Primary transactional database |\n\nStores all business data: applicants, listings, user accounts, configurations, communication logs, and portal syndication state. Managed by Google Cloud SQL with automated backups and high availability.\n\n### PACE AI Suite Containers\n\n#### PACE AI Backend\n\n| | |\n|---|---|\n| **Technology** | Python, FastAPI |\n| **Runtime** | Python on GKE (`pace-ai` namespace) |\n| **Role** | Main AI service with agentic functionality |\n\nThe central AI service. Handles AI conversation processing, transcript analysis, and agentic workflows. Streams responses back to PACE via SSE. Fetches the PACE database schema to generate context-aware queries. Orchestrates MCP tool calls for specialized operations.\n\n#### MCP Servers\n\n| | |\n|---|---|\n| **Technology** | Python, FastMCP |\n| **Runtime** | Python on GKE (`pace-ai` namespace) |\n| **Role** | Tool servers for AI agents |\n\nModel Context Protocol servers that expose specialized tools to the AI backend. Each MCP server provides domain-specific functions (e.g., fetching listings, querying applicant data) that AI agents can invoke during agentic workflows. Communicates with PACE via REST to retrieve business data.\n\n#### PACE AI DB\n\n| | |\n|---|---|\n| **Technology** | PostgreSQL on Google Cloud SQL |\n| **Role** | Dedicated AI database |\n\nStores AI-specific data: conversation histories, transcripts, agent execution state, and embeddings. Isolated from the main PACE DB to maintain separation of concerns between the CRM and AI subsystems.\n\n### External Systems\n\n#### Google Identity Services\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | OAuth 2.0 / OpenID Connect |\n| **Role** | Source of truth for authentication |\n\nAll Allsop employees authenticate via Google SSO. PACE delegates identity verification to Google Identity Services and does not manage credentials directly.\n\n#### Gmail API\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | Google Gmail REST API |\n| **Role** | Email delivery |\n\nUsed to send emails on behalf of agents or as system notifications. Listing share emails, applicant correspondence, and automated notifications are dispatched through the Gmail API using delegated credentials.\n\n#### Google Calendar API\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | Google Calendar REST API + Push Notifications (Webhooks) |\n| **Role** | Agent calendar management |\n\nManages agent calendars for property viewings, meeting bookings, and availability tracking. PACE uses Google Calendar as the source of truth for all calendar functionality (scheduling, conflict detection, reminders, attendee notifications). Applicants are notified of viewings via email through Google Calendar's built-in notification system. PACE maintains a custom wrapper layer with its own database records for viewing-specific metadata (viewing details, applicant/agent associations, status tracking) that Google Calendar does not natively support.\n\n#### Vertex AI\n\n| | |\n|---|---|\n| **Provider** | Google Cloud |\n| **Protocol** | Vertex AI REST API |\n| **Role** | LLM inference and embedding services |\n\nGoogle's managed AI platform used by the PACE AI Backend for LLM inference and semantic search. The AI backend maintains its own vectorized knowledge database and handles embeddings internally — Vertex AI provides the language model capabilities (text generation, reasoning, conversation analysis) that operate on top of that vector store. The LLM dependency is isolated behind the AI backend — PACE Web does not call Vertex AI directly.\n\n#### WhatsApp\n\n| | |\n|---|---|\n| **Provider** | Exotel |\n| **Protocol** | WhatsApp Business API (REST) |\n| **Role** | Applicant messaging |\n\nEnables agents to communicate with applicants via WhatsApp. Messages are sent through Exotel's WhatsApp Business API integration. Used for listing shares, follow-ups, and applicant communication.\n\n#### Call Center\n\n| | |\n|---|---|\n| **Provider** | Exotel |\n| **Protocol** | REST API + WebSocket |\n| **Role** | VoIP softphone and call streaming |\n\nProvides softphone capabilities embedded in the PACE UI. Agents can make and receive calls directly from the platform. Real-time call events and audio streams are delivered via WebSocket for live call tracking and recording.\n\n#### Property Finder Portal\n\n| | |\n|---|---|\n| **Provider** | Property Finder |\n| **Protocol** | REST API |\n| **Role** | Listing syndication |\n\nUAE real estate listings portal. PACE publishes and syncs property listings to Property Finder, maintaining listing status, pricing, and media assets.\n\n#### Bayut Portal\n\n| | |\n|---|---|\n| **Provider** | Bayut (Dubizzle Group) |\n| **Protocol** | REST API |\n| **Role** | Listing syndication |\n\nUAE real estate listings portal. PACE publishes and syncs property listings to Bayut, maintaining listing status, pricing, and media assets.\n\n#### Allsop & Allsop Portal\n\n| | |\n|---|---|\n| **Provider** | Allsop & Allsop |\n| **Protocol** | REST API |\n| **Role** | Company listing portal |\n\nAllsop's own real estate listings website. PACE publishes listings directly to the company portal, ensuring the public-facing website stays in sync with the CRM.\n\n#### Looker Studio\n\n| | |\n|---|---|\n| **Provider** | Google Workspace |\n| **Protocol** | Embedded iframe |\n| **Role** | Embedded analytics and KPI dashboards |\n\nGoogle's data visualization tool embedded in PACE as an iframe. Provides agents and managers with analytics dashboards and KPI reports without leaving the platform.\n\n#### Salesforce CRM (Deprecated)\n\n| | |\n|---|---|\n| **Provider** | Salesforce |\n| **Protocol** | REST API / CSV import |\n| **Role** | Legacy CRM |\n| **Status** | **Deprecated** — data migration source only |\n\nThe previous CRM system. Historical data was migrated to PACE via CSV import.\n\n#### Salesforce Adapter\n\n| | |\n|---|---|\n| **Protocol** | REST API |\n| **Role** | Salesforce data synchronization |\n\nA service managed by the Salesforce/Allsop side that pulls data from PACE's REST APIs and maps it to Salesforce's own data models. PACE has no knowledge of or dependency on the Salesforce schema — it simply exposes APIs that the adapter consumes.\n\n---\n\n## Interface Catalog\n\nAll container-level interfaces on the PACE Container Diagram, organized by domain.\n\n| ID | Interface | From | To | Protocol |\n|---|---|---|---|---|\n| [INTF-USER-01](#intf-user-01-%E2%80%94-manager-interface) | Manager Interface | Manager | PACE | HTTPS/REST |\n| [INTF-USER-02](#intf-user-02-%E2%80%94-admin-interface) | Admin Interface | Admin | PACE | HTTPS/REST |\n| [INTF-USER-03](#intf-user-03-%E2%80%94-agent-interface) | Agent Interface | Agent | PACE | HTTPS/REST |\n| [INTF-AUTH-02](#intf-auth-02-%E2%80%94-google-identity-confirmation) | Google Identity Confirmation | PACE | Google Identity Services | HTTP REST (OAuth 2.0) |\n| [INTF-DB-01](#intf-db-01-%E2%80%94-pace-database-access) | PACE Database Access | PACE | Pace DB | PostgreSQL Wire Protocol |\n| [INTF-DB-02](#intf-db-02-%E2%80%94-ai-database-access) | AI Database Access | PACE AI Backend | PACE AI DB | PostgreSQL Wire Protocol |\n| [INTF-AI-01](#intf-ai-01-%E2%80%94-ai-application-request) | AI Application Request | PACE | PACE AI Backend | HTTP SSE |\n| [INTF-AI-02](#intf-ai-02-%E2%80%94-schema-and-data-fetching) | Schema and Data Fetching | PACE AI Backend | PACE | HTTP REST |\n| [INTF-AI-03](#intf-ai-03-%E2%80%94-mcp-data-retrieval) | MCP Data Retrieval | MCP Servers | PACE | HTTP REST |\n| [INTF-AI-04..0x](#intf-ai-040x-%E2%80%94-ai-agent-to-mcp-communication) | AI Agent to MCP Communication | PACE AI Backend | MCP Servers | HTTP Streaming |\n| [INTF-AI-05](#intf-ai-05-%E2%80%94-llm-inference-vertex-ai) | LLM Inference (Vertex AI) | PACE AI Backend | Vertex AI | HTTP REST |\n| [INTF-PACE-01](#intf-pace-01-%E2%80%94-call-center-softphone) | Call Center (Softphone) | PACE | Call Center (Exotel) | iframe, WebRTC, REST |\n| [INTF-PACE-02](#intf-pace-02-%E2%80%94-looker-studio-embedded-analytics) | Looker Studio (Embedded Analytics) | PACE | Looker Studio | iframe |\n| [INTF-PACE-03](#intf-pace-03-%E2%80%94-gmail-email) | Gmail (Email) | PACE | Gmail API | HTTP REST |\n| [INTF-PACE-04](#intf-pace-04-%E2%80%94-allsop--allsop-portal-listing-publication) | Allsop & Allsop Portal (Listing Publication) | PACE | Allsop & Allsop Portal | TBD |\n| [INTF-PACE-05](#intf-pace-05-%E2%80%94-bayut-listing-publication) | Bayut (Listing Publication) | PACE | Bayut Portal | XML Feed / REST |\n| [INTF-PACE-06](#intf-pace-06-%E2%80%94-property-finder-listing-publication) | Property Finder (Listing Publication) | PACE | Property Finder Portal | HTTP REST (OAuth 2.0) |\n| [INTF-PACE-07](#intf-pace-07-%E2%80%94-whatsapp-messaging) | WhatsApp (Messaging) | PACE | WhatsApp (Exotel) | HTTP REST |\n| [INTF-PACE-08](#intf-pace-08-%E2%80%94-google-calendar-viewings--scheduling) | Google Calendar (Viewings & Scheduling) | PACE | Google Calendar API | HTTP REST, Webhooks |\n| [INTF-SF-01](#intf-sf-01-%E2%80%94-salesforce-adapter) | Salesforce Adapter | Salesforce Adapter | PACE | HTTP REST |\n\n### User Interfaces\n\n#### INTF-USER-01 — Manager Interface\n\n| | |\n|---|---|\n| **From** | Manager |\n| **To** | PACE |\n| **Protocol** | HTTPS / REST |\n| **Authentication** | Google SSO (INTF-AUTH-02) |\n| **Data** | KPI dashboards, team performance, approval workflows, listing oversight |\n\nWeb UI access for the Manager role. Managers oversee agent performance, approve workflows, and view business KPIs and statistics.\n\n#### INTF-USER-02 — Admin Interface\n\n| | |\n|---|---|\n| **From** | Admin |\n| **To** | PACE |\n| **Protocol** | HTTPS / REST |\n| **Authentication** | Google SSO (INTF-AUTH-02) |\n| **Data** | System configuration, user management, data administration, portal settings |\n\nWeb UI access for the Admin role. Admins configure system settings, manage user accounts and roles, administer reference data, and configure portal integrations.\n\n#### INTF-USER-03 — Agent Interface\n\n| | |\n|---|---|\n| **From** | Agent |\n| **To** | PACE |\n| **Protocol** | HTTPS / REST |\n| **Authentication** | Google SSO (INTF-AUTH-02) |\n| **Data** | Applicant records, listing management, communication tools, AI assistant, softphone |\n\nWeb UI access for the Agent role. Agents manage applicants and listings, communicate with applicants via email/WhatsApp/phone, and use the AI assistant for conversation analysis and data queries.\n\n### Authentication\n\n#### INTF-AUTH-02 — Google Identity Confirmation\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Google Identity Services |\n| **Protocol** | HTTP REST (OAuth 2.0 / OpenID Connect) |\n| **Data** | ID tokens, access tokens, user profile claims (email, name, domain) |\n\nPACE delegates all authentication to Google Identity Services. On login, the browser redirects to Google's OAuth consent flow. PACE validates the returned ID token and establishes a session. No credentials are stored in PACE — Google is the single source of truth for identity.\n\n### Database Interfaces\n\n#### INTF-DB-01 — PACE Database Access\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Pace DB |\n| **Protocol** | PostgreSQL Wire Protocol (TCP 5432) |\n| **Data** | Applicants, listings, users, configurations, communication logs, portal state |\n\nPrimary data path for all PACE business operations. Payload CMS manages the schema and ORM layer. Connection pooling is handled at the application level. The database is hosted on Cloud SQL with private IP access within the GCP VPC.\n\n#### INTF-DB-02 — AI Database Access\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | PACE AI DB |\n| **Protocol** | PostgreSQL Wire Protocol (TCP 5432) |\n| **Data** | Conversations, transcripts, agent execution state, embeddings |\n\nDedicated data path for the AI subsystem. Isolated from the main PACE DB to maintain separation between CRM and AI concerns. Hosted on Cloud SQL with private IP access within the GCP VPC.\n\n### AI Integration\n\n#### INTF-AI-01 — AI Application Request\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | PACE AI Backend |\n| **Protocol** | HTTP SSE (Server-Sent Events) |\n| **Data** | Input data for embedding/search, query parameters → search results, next best steps, AI-generated recommendations |\n\nThe primary communication channel between PACE and the AI backend. PACE sends input data (text for embedding, search queries, conversation data for analysis) and receives streamed results via SSE — including semantic search results, next best step recommendations, and AI-processed outputs. The AI backend orchestrates the processing internally, calling Vertex AI (INTF-AI-05) for LLM inference and embeddings as needed. PACE does not interact with the LLM directly.\n\n#### INTF-AI-05 — LLM Inference (Vertex AI)\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | Vertex AI |\n| **Protocol** | HTTP REST (Google Vertex AI API) |\n| **Data** | Prompts, model parameters → generated text, semantic search results, token streams |\n\nThe LLM inference layer. PACE AI Backend calls Vertex AI for language model operations: text generation, semantic search, conversation analysis, and agentic reasoning. The AI backend maintains its own vectorized knowledge database and handles embeddings internally — Vertex AI is used for LLM inference and semantic search capabilities that operate on top of that vector store. The AI backend constructs prompts with context from PACE data (INTF-AI-02) and MCP tool results (INTF-AI-04), sends them to Vertex AI, and processes the model output before returning application-level results to PACE (INTF-AI-01). This interface isolates the LLM dependency — switching models or providers only requires changes in the AI backend, not in PACE.\n\n#### INTF-AI-02 — Schema and Data Fetching\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | PACE |\n| **Protocol** | HTTP REST |\n| **Data** | Database schema definitions, field metadata, entity relationships, business data (applicants, listings, etc.) |\n\nThe AI backend fetches both schema and business data from PACE via REST APIs. Schema retrieval enables context-aware query generation — the AI understands the data model without hardcoded knowledge. Business data retrieval provides the AI with real-time CRM data (applicants, listings, activities, etc.) needed for conversation context, analysis, and agentic workflows. All data the PACE AI Suite needs from PACE Web flows through this REST interface — there is no direct database access between the two systems.\n\n#### INTF-AI-03 — MCP Data Retrieval\n\n| | |\n|---|---|\n| **From** | MCP Servers |\n| **To** | PACE |\n| **Protocol** | HTTP REST |\n| **Data** | Business data (listings, applicants, configurations) scoped to the AI agent's request |\n\nMCP tool servers fetch business data from PACE on behalf of AI agents. When an agent needs real-time data (e.g., \"show me listings in Dubai Marina\"), the MCP server calls PACE's API to retrieve the relevant records and returns them as tool results.\n\n#### INTF-AI-04..0x — AI Agent to MCP Communication\n\n| | |\n|---|---|\n| **From** | PACE AI Backend |\n| **To** | MCP Servers |\n| **Protocol** | HTTP Streaming (MCP over HTTP) |\n| **Data** | Tool invocations (function name, arguments) → tool results (structured data) |\n\nThe agentic communication channel. The AI backend orchestrates tool calls by streaming requests to MCP servers. Each MCP server exposes domain-specific tools (e.g., listing search, applicant lookup, data aggregation). The `..0x` suffix indicates the interface scales with additional MCP servers as new tools are added.\n\n### External System Integrations\n\n#### INTF-PACE-01 — Call Center (Softphone)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Call Center (Exotel) |\n| **Protocol** | Omni Toolbar SDK (iframe + JS events) + WebRTC (voice) + HTTP REST (webhooks) |\n| **Data** | Call events, interaction lifecycle, agent state, disposition codes, CRM record mapping |\n\nExotel's contact center is embedded in PACE using the **CRM Integration (Iframe Model)** — a loosely-coupled approach where the Omni Toolbar runs independently inside an iframe and communicates with PACE exclusively via events. PACE remains the source of truth for navigation and data; the toolbar handles all telephony concerns.\n\n**Embedding:** The PACE frontend hosts a `<div id=\"ameyoIframeDiv\">` container. The toolbar loads from `https://<eccDomain>/omniapp/toolbar/index.html` and is initialized with a lightweight JS SDK:\n\n```javascript\nsdk.initialize({ context: \"crm\", origin: \"https://<pace_domain>\", instanceId: \"ameyoIframe\" });\n```\n\n**Integration layers:**\n\n1. **Iframe + Event-Driven SDK (UI + Control)** — The toolbar runs independently inside the iframe and communicates with PACE through defined events. The interaction lifecycle is: toolbar initializes → agent logs in → interaction arrives → toolbar emits event → PACE reacts (screen pop, data fetch) → agent completes work → toolbar emits wrap-up event. Core integration points:\n   - **SSO/Login**: `login` / `forceLogin` — PACE authenticates the agent into the toolbar\n   - **Click-to-Dial**: `initiateInteraction()` — PACE triggers outbound calls with applicant data\n   - **Screen Pop**: `showCrm` event — toolbar notifies PACE of incoming call, PACE looks up the applicant record\n   - **Disposition**: `disposeInteraction()` — PACE sends wrap-up data (disposition code, notes) after call ends\n2. **WebRTC (Voice)** — Voice calls are handled via WebRTC within the iframe. Audio is peer-to-peer between the agent's browser and Exotel's infrastructure — PACE does not process or route audio directly.\n3. **REST Webhooks (Backend Events)** — Call events are pushed from Exotel to PACE's backend via REST webhooks. This allows PACE to log call activity, associate calls with applicant records, and trigger workflows independently of the frontend SDK events.\n\n**SSO / Authentication:** The Omni Toolbar uses a CRM-initiated login model — not token-based SSO. PACE authenticates the agent into the toolbar by calling `sdk.login({ username, password })` with the agent's Ameyo credentials after the agent logs into PACE via Google SSO. User IDs must match between PACE and Ameyo. `sdk.forceLogin()` is available to override an existing session (e.g., agent left logged in elsewhere). Session teardown via `sdk.logout()`.\n\n> **Architectural consideration:** This model requires PACE to store or derive Ameyo credentials per agent, since actual username/password are passed through the SDK (no OAuth/JWT token exchange). Credentials must be stored encrypted with appropriate access controls. Alternatively, investigate whether Exotel supports a token-based or API-key-based authentication flow for programmatic login to avoid credential storage.\n\n**Prerequisites:** Ameyo user accounts provisioned with matching PACE user IDs, SDK initialization with CRM context and origin.\n\n**Reference:** [Exotel Omni Toolbar](https://docs.exotel.com/harmony/omni-toolbar)\n\n#### INTF-PACE-02 — Looker Studio (Embedded Analytics)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Looker Studio |\n| **Protocol** | Embedded iframe |\n| **Data** | Statistics dashboards, KPI reports (read-only, view mode only) |\n\nLooker Studio (free version) reports are embedded in the PACE UI as iframes, providing agents and managers with analytics dashboards without leaving the platform.\n\n**Embedding:** Reports are loaded via `https://lookerstudio.google.com/embed/reporting/<REPORT_ID>/page/<PAGE_ID>` inside an iframe. Reports render in view-only mode with interactive filters and date controls. A Looker Studio watermark is always present (cannot be removed in the free version).\n\n**Access control options (to be decided):**\n\n| Approach | Security | Complexity | Notes |\n|---|---|---|---|\n| **Google Workspace domain restriction** | Medium | Low | Restrict report sharing to the Allsop Google Workspace domain. Works because all users already authenticate via Google SSO (INTF-AUTH-02). Coarse-grained — all-or-nothing, no per-role data filtering. |\n| **URL parameters for filtering** | Low | Low | PACE dynamically generates embed URLs with user/role-specific filter params. Params are visible in the DOM and can be manipulated by users — **not suitable for data isolation**. |\n| **Community Connector + token** | High | High | PACE generates a short-lived signed token (e.g., JWT) per user, passed via the embed URL's `config` param. A custom Community Connector validates the token against PACE's backend and returns only authorized data. Most secure, but requires building and maintaining a custom connector. |\n\n> **Recommendation:** Start with Google Workspace domain restriction (all Allsop employees can view). If per-role data filtering is needed later, evaluate the Community Connector + token approach. URL parameters should only be used as a UX convenience (default view), never as a security boundary.\n\n#### INTF-PACE-03 — Gmail (Email)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Gmail API |\n| **Protocol** | HTTP REST (Google Gmail API) |\n| **Data** | Email messages (to, from, subject, body, attachments), listing share payloads |\n\nSends emails through the Gmail API using delegated credentials. Used for listing share emails to applicants, system notifications, and agent-initiated correspondence. Emails are sent as the agent's Google Workspace identity.\n\n#### INTF-PACE-04 — Allsop & Allsop Portal (Listing Publication)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Allsop & Allsop Portal |\n| **Protocol** | TBD |\n| **Data** | Listing details (title, description, pricing, location, media assets, status) |\n| **Status** | **Integration path under investigation** |\n\nAllsop & Allsop's website is the company's public-facing property listings portal. It is not a third-party marketplace — it is Allsop's own brokerage site. The portal currently sources its listing data from Salesforce (Propertybase), not from PACE directly.\n\nAs PACE replaces Salesforce as the primary CRM, the portal data path needs to be resolved. Two options are under consideration:\n\n1. **PACE → Salesforce Adapter → Propertybase → Portal** — Continue syncing listing data to Propertybase via the Salesforce Adapter (INTF-SF-01), and the portal continues reading from Salesforce as it does today. This preserves the existing portal integration but adds latency and maintains a dependency on the deprecated Salesforce pipeline.\n2. **PACE → Portal (direct)** — The portal reads listing data directly from PACE via a new API. This removes the Salesforce dependency but requires changes to the portal's data source.\n\n> **Action required**: Confirm with the Allsop portal team which integration path will be used. This interface definition will be updated once the approach is decided.\n\n#### INTF-PACE-05 — Bayut (Listing Publication)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Bayut Portal |\n| **Protocol** | XML Feed Syndication (current) / REST API (under investigation) |\n| **Data** | Listing details (title, description, pricing, location, media assets, status) |\n\nSyncs property listings to Bayut (Dubizzle Group).\n\n**Current integration model — XML Feed Syndication (pull):** PACE generates and hosts an XML feed at a publicly accessible URL. Bayut's system periodically pulls this feed to sync listing data. Listings are created, updated, or removed implicitly through feed content changes. This is Bayut's established integration model used by most CRM platforms.\n\n**Potential REST API (push) — under investigation:** Bayut has reportedly introduced REST API functionality for listing management. If confirmed, this would allow PACE to push listing create/update/unpublish operations directly via API calls, similar to the Property Finder Enterprise API (INTF-PACE-06). This would provide real-time sync and explicit operation control compared to the feed-based approach.\n\n> **Action required**: Investigate whether Bayut's REST API is available for listing management and evaluate migration from XML feed to REST push.\n\n#### INTF-PACE-06 — Property Finder (Listing Publication)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Property Finder Portal |\n| **Protocol** | HTTP REST (Enterprise API, OAuth 2.0 / JWT) |\n| **Data** | Listing details (title, description, pricing, location, media assets, status), webhook events |\n\nPublishes and syncs property listings to Property Finder via their Enterprise API. Supports the full listing lifecycle: create (draft), update, publish, and unpublish. Authentication uses OAuth 2.0 with API Key + Secret, producing JWT bearer tokens. Property Finder also provides webhooks for event notifications (publication status, lead assignments). Supports create, update, and unpublish operations for listing syndication.\n\n#### INTF-PACE-07 — WhatsApp (Messaging)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | WhatsApp (Exotel) |\n| **Protocol** | HTTP REST (WhatsApp Business API via Exotel) |\n| **Data** | Template messages (carousel + standard), delivery status, incoming replies |\n\nSends WhatsApp messages to applicants through Exotel's WhatsApp Business API. Primary use case is sharing property listings with applicants.\n\n**Messaging model:**\n\nWhatsApp is architecturally a two-way platform — there is no \"notification-only\" mode that prevents recipients from replying. However, template messages function as effective one-way notifications:\n\n- **Business-initiated (outbound):** PACE sends a pre-approved template message. If the recipient does not reply, no conversation window opens and no further interaction occurs.\n- **Customer-initiated (inbound):** If a recipient replies, a 24-hour Customer Service Window (CSW) opens during which PACE can send free-form messages. After 24h, only template messages can be sent again.\n- **Billing:** Per-message pricing (since July 2025) — each template message is billed individually. Free-form messages within an active CSW are free.\n\n**Template types for listing shares:**\n\n| Template | Use case | Constraints |\n|---|---|---|\n| **Carousel template** | 2–10 listings | 2–10 cards, each with 1 image (1125x600px recommended), 160-char body, up to 2 buttons (URL/quick reply). Image, body text, and button URL are parameterized per card. |\n| **Standard media template** | Single listing | 1 header image, up to 1024-char body with variables, up to 3 buttons. |\n\nPACE needs both template types: a carousel for multi-listing shares and a standard media template for single-listing shares (carousel minimum is 2 cards).\n\n**Broadcast (one-to-many):**\n\nPACE can send the same template to multiple applicants. There is no native batch endpoint — each recipient requires an individual API call (`POST /messages`). Each recipient is fully independent (own conversation window, own billing). Default throughput: ~80 messages/second.\n\n| Messaging tier | Unique contacts per 24h |\n|---|---|\n| Tier 1 (new) | 1,000 |\n| Tier 2 | 10,000 |\n| Tier 3 | 100,000 |\n| Tier 4 (verified) | Unlimited |\n\nTiers upgrade automatically based on volume and quality rating. Since October 2025, limits apply at the business portfolio level, not per phone number.\n\n> **Note:** If PACE does not intend to handle inbound replies, implement an application-level strategy (e.g., auto-reply with \"this number does not accept replies\" or silently ignore incoming messages).\n\n#### INTF-PACE-08 — Google Calendar (Viewings & Scheduling)\n\n| | |\n|---|---|\n| **From** | PACE |\n| **To** | Google Calendar API |\n| **Protocol** | HTTP REST (Google Calendar API v3) + Push Notifications (Webhooks) |\n| **Data** | Calendar events (viewings, meetings), agent availability, attendee lists, extended properties |\n\nBidirectional integration with Google Calendar for managing agent schedules, property viewings, and meeting bookings.\n\n**PACE → Google Calendar (outbound):**\n- Create/update/delete calendar events on agent calendars (viewings, meetings)\n- Check agent availability (freebusy queries) for scheduling\n- Events include extended properties for PACE-specific metadata (viewing ID, listing reference, applicant reference)\n- Applicants are added as event attendees — Google Calendar handles sending email invitations and reminders to them automatically\n\n**Google Calendar → PACE (inbound):**\n- Push notifications (webhooks) via watch channels notify PACE when events are created, modified, or deleted on the agent's calendar (e.g., agent reschedules directly in Google Calendar)\n- PACE syncs the change back to its own database to keep wrapper records consistent\n\n**PACE wrapper layer:**\nPACE maintains its own records in Pace DB (INTF-DB-01) for viewing-specific data that Google Calendar does not natively support: viewing details, applicant/agent associations across multiple viewings, viewing status tracking, and aggregate views (e.g., all appointments for a given applicant or agent). The calendar UI in PACE uses a React calendar component with this combined data.\n\n**Authentication:** Uses Google Workspace service account with domain-wide delegation, or per-agent OAuth consent, to access agent calendars.\n\n#### INTF-SF-01 — Salesforce Adapter\n\n| | |\n|---|---|\n| **From** | Salesforce Adapter |\n| **To** | PACE |\n| **Protocol** | HTTP REST |\n| **Data** | CRM records (applicants, listings, activities) |\n\nPACE exposes REST APIs that the Salesforce Adapter consumes. The adapter pulls data from PACE and handles all mapping to Salesforce's own data models — PACE has no knowledge of or dependency on the Salesforce schema. The direction of responsibility is: PACE provides the data, Salesforce takes care of fetching and transforming it.\n",
       "filename" : "02-container-architecture.md",
       "format" : "Markdown",
       "order" : 2,
@@ -29,7 +29,8 @@
     } ]
   },
   "id" : 1,
-  "lastModifiedDate" : "2026-02-19T18:50:58Z",
+  "lastModifiedAgent" : "structurizr-ui",
+  "lastModifiedDate" : "2026-02-19T19:17:03Z",
   "model" : {
     "deploymentNodes" : [ {
       "children" : [ {
@@ -41,7 +42,7 @@
             "id" : "95",
             "instanceId" : 1,
             "properties" : {
-              "structurizr.dsl.identifier" : "c1370047-9bf1-4f2d-95f8-5d32490cac0d"
+              "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0.67cc1697-013b-4e36-989c-6568c60320bd.e06d000d-4b51-440d-90c0-db35add9bfec"
             },
             "relationships" : [ {
               "description" : "AI application request (INTF-AI-01)",
@@ -66,9 +67,10 @@
           "instances" : "1",
           "name" : "pace-web",
           "properties" : {
-            "structurizr.dsl.identifier" : "363327e2-02da-430d-9da2-16780298f71e"
+            "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0.67cc1697-013b-4e36-989c-6568c60320bd"
           },
-          "tags" : "Element,Deployment Node"
+          "tags" : "Element,Deployment Node",
+          "technology" : "Kubernetes Namespace"
         }, {
           "containerInstances" : [ {
             "containerId" : "29",
@@ -77,7 +79,7 @@
             "id" : "97",
             "instanceId" : 1,
             "properties" : {
-              "structurizr.dsl.identifier" : "f91560d4-26ce-45bd-a237-f76c56d937be"
+              "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0.9c8ebc67-a56f-43d9-98ef-a8bcdc20c289.d3e2543c-20f7-462f-9982-1dd11fef0c28"
             },
             "relationships" : [ {
               "description" : "Fetches schema and data (INTF-AI-02)",
@@ -109,7 +111,7 @@
             "id" : "100",
             "instanceId" : 1,
             "properties" : {
-              "structurizr.dsl.identifier" : "82cffdc3-4817-4e8d-88eb-87253ad68b45"
+              "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0.9c8ebc67-a56f-43d9-98ef-a8bcdc20c289.8462a977-cade-463a-9e12-ce03c36b112c"
             },
             "relationships" : [ {
               "description" : "Fetch PACE data (INTF-AI-03)",
@@ -127,16 +129,18 @@
           "instances" : "1",
           "name" : "pace-ai",
           "properties" : {
-            "structurizr.dsl.identifier" : "4d585cf3-907b-41f2-ad06-70e56af427e8"
+            "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0.9c8ebc67-a56f-43d9-98ef-a8bcdc20c289"
           },
-          "tags" : "Element,Deployment Node"
+          "tags" : "Element,Deployment Node",
+          "technology" : "Kubernetes Namespace"
         } ],
+        "description" : "Managed Kubernetes cluster running PACE workloads",
         "environment" : "Production",
         "id" : "93",
         "instances" : "1",
         "name" : "GKE Cluster",
         "properties" : {
-          "structurizr.dsl.identifier" : "28b50e7a-c882-416a-a67a-5416764ff4bd"
+          "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0"
         },
         "softwareSystemInstances" : [ {
           "deploymentGroups" : [ "Default" ],
@@ -144,7 +148,7 @@
           "id" : "103",
           "instanceId" : 1,
           "properties" : {
-            "structurizr.dsl.identifier" : "8aa648c3-a430-4fb9-b063-3f46ef4073a1"
+            "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.d3a973cf-709e-49df-b2bd-68da502417c0.dabfe5ab-b5ff-4f50-8ef0-bcb667c69ada"
           },
           "softwareSystemId" : "21",
           "tags" : "Software System Instance"
@@ -159,7 +163,7 @@
           "id" : "105",
           "instanceId" : 1,
           "properties" : {
-            "structurizr.dsl.identifier" : "380daa2f-1170-4ce5-88b1-3024d613c090"
+            "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.c7c91682-40e7-4fc6-b5cc-66922af1dd3c.abadbd18-7e52-4868-bf99-dd62b1806b6e"
           },
           "tags" : "Container Instance"
         }, {
@@ -169,26 +173,28 @@
           "id" : "107",
           "instanceId" : 1,
           "properties" : {
-            "structurizr.dsl.identifier" : "84448b50-6a91-47bc-9ca7-c2ec556eabc1"
+            "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.c7c91682-40e7-4fc6-b5cc-66922af1dd3c.5591e9f4-adac-4d60-9bd6-64e0c68d01ef"
           },
           "tags" : "Container Instance"
         } ],
+        "description" : "Managed PostgreSQL database instances",
         "environment" : "Production",
         "id" : "104",
         "instances" : "1",
         "name" : "Cloud SQL",
         "properties" : {
-          "structurizr.dsl.identifier" : "d4ebebfc-e7da-4c79-99ed-83b9c4cae150"
+          "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.c7c91682-40e7-4fc6-b5cc-66922af1dd3c"
         },
         "tags" : "Element,Deployment Node",
         "technology" : "Google Cloud SQL"
       } ],
+      "description" : "Primary cloud provider for all PACE services",
       "environment" : "Production",
       "id" : "92",
       "instances" : "1",
       "name" : "Google Cloud Platform",
       "properties" : {
-        "structurizr.dsl.identifier" : "0512b35b-dfe2-4084-a8fe-3ae3703caf1a"
+        "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009"
       },
       "softwareSystemInstances" : [ {
         "deploymentGroups" : [ "Default" ],
@@ -196,26 +202,29 @@
         "id" : "109",
         "instanceId" : 1,
         "properties" : {
-          "structurizr.dsl.identifier" : "bc2033b8-7554-4dfa-8a28-c511a263790d"
+          "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.d7a038cd-46c4-49f8-8d88-9cc76cee8009.2116bf2d-6359-438f-b665-3bd51db8ad84"
         },
         "relationships" : [ {
           "description" : "Creates alerts based on rules",
           "destinationId" : "116",
           "id" : "117",
           "linkedRelationshipId" : "87",
-          "sourceId" : "109"
+          "sourceId" : "109",
+          "technology" : "REST API"
         } ],
         "softwareSystemId" : "23",
         "tags" : "Software System Instance"
       } ],
-      "tags" : "Element,Deployment Node,CloudProvider"
+      "tags" : "Element,Deployment Node,CloudProvider",
+      "technology" : "GCP"
     }, {
+      "description" : "Source control and CI/CD platform",
       "environment" : "Production",
       "id" : "110",
       "instances" : "1",
       "name" : "Atlassian Cloud",
       "properties" : {
-        "structurizr.dsl.identifier" : "79a4bf71-5a31-43e7-927e-aad0f46a9e75"
+        "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.cbcdf294-0cbe-4a72-9693-4129385f88f5"
       },
       "softwareSystemInstances" : [ {
         "deploymentGroups" : [ "Default" ],
@@ -223,20 +232,22 @@
         "id" : "111",
         "instanceId" : 1,
         "properties" : {
-          "structurizr.dsl.identifier" : "ae599e1d-ffe0-4f54-93de-8eea7eeb6ce7"
+          "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.cbcdf294-0cbe-4a72-9693-4129385f88f5.9e49f065-3ee0-46ee-90ef-bdba50a8b2ea"
         },
         "relationships" : [ {
           "description" : "Connects to CI/CD repository",
           "destinationId" : "103",
           "id" : "112",
           "linkedRelationshipId" : "85",
-          "sourceId" : "111"
+          "sourceId" : "111",
+          "technology" : "Git"
         }, {
           "description" : "Detect changes and builds images",
           "destinationId" : "113",
           "id" : "114",
           "linkedRelationshipId" : "84",
-          "sourceId" : "111"
+          "sourceId" : "111",
+          "technology" : "Git Webhook"
         } ],
         "softwareSystemId" : "19",
         "tags" : "Software System Instance"
@@ -246,19 +257,21 @@
         "id" : "113",
         "instanceId" : 1,
         "properties" : {
-          "structurizr.dsl.identifier" : "dafa3232-443d-4e7e-af95-6aa1e068ff44"
+          "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.cbcdf294-0cbe-4a72-9693-4129385f88f5.4473ecfa-4c28-4a8b-b0c0-8e6f7261a684"
         },
         "softwareSystemId" : "20",
         "tags" : "Software System Instance"
       } ],
-      "tags" : "Element,Deployment Node,CloudProvider"
+      "tags" : "Element,Deployment Node,CloudProvider",
+      "technology" : "Atlassian"
     }, {
+      "description" : "Incident management and alert routing",
       "environment" : "Production",
       "id" : "115",
       "instances" : "1",
       "name" : "PagerDuty",
       "properties" : {
-        "structurizr.dsl.identifier" : "65427902-5038-4407-8245-fca1f33e3d4a"
+        "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.f836b932-e7ad-4ed4-b155-967f271ca31d"
       },
       "softwareSystemInstances" : [ {
         "deploymentGroups" : [ "Default" ],
@@ -266,12 +279,13 @@
         "id" : "116",
         "instanceId" : 1,
         "properties" : {
-          "structurizr.dsl.identifier" : "1f07e21c-9a22-4423-a158-e7b41542fb73"
+          "structurizr.dsl.identifier" : "ff7010f4-2c9b-46a9-9e40-ce7f0c4e45bb.f836b932-e7ad-4ed4-b155-967f271ca31d.ca319a88-8162-4b39-96c5-5fc427407561"
         },
         "softwareSystemId" : "22",
         "tags" : "Software System Instance"
       } ],
-      "tags" : "Element,Deployment Node,CloudProvider"
+      "tags" : "Element,Deployment Node,CloudProvider",
+      "technology" : "PagerDuty SaaS"
     } ],
     "people" : [ {
       "description" : "Allsop employee with Manager role.",
@@ -285,7 +299,8 @@
         "destinationId" : "24",
         "id" : "31",
         "sourceId" : "1",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Manager interface (INTF-USER-01)",
         "destinationId" : "26",
@@ -308,7 +323,8 @@
         "destinationId" : "24",
         "id" : "33",
         "sourceId" : "2",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Admin interface (INTF-USER-02)",
         "destinationId" : "26",
@@ -331,7 +347,8 @@
         "destinationId" : "24",
         "id" : "35",
         "sourceId" : "3",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Agent interface (INTF-USER-03)",
         "destinationId" : "26",
@@ -354,31 +371,36 @@
         "destinationId" : "24",
         "id" : "37",
         "sourceId" : "4",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Development",
         "destinationId" : "27",
         "id" : "38",
         "sourceId" : "4",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Commits code",
         "destinationId" : "19",
         "id" : "39",
         "sourceId" : "4",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "Git, HTTPS"
       }, {
         "description" : "Modifies CI scripts",
         "destinationId" : "20",
         "id" : "88",
         "sourceId" : "4",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "YAML, HTTPS"
       }, {
         "description" : "Triggers deployments",
         "destinationId" : "21",
         "id" : "89",
         "sourceId" : "4",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       } ],
       "tags" : "Element,Person,Ingemark"
     }, {
@@ -393,25 +415,29 @@
         "destinationId" : "24",
         "id" : "40",
         "sourceId" : "5",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Monitors and supports",
         "destinationId" : "27",
         "id" : "41",
         "sourceId" : "5",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Reacts to alerts",
         "destinationId" : "22",
         "id" : "90",
         "sourceId" : "5",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       }, {
         "description" : "Monitors system",
         "destinationId" : "23",
         "id" : "91",
         "sourceId" : "5",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
       } ],
       "tags" : "Element,Person,Ingemark"
     } ],
@@ -437,7 +463,7 @@
     }, {
       "description" : "Source of truth for authentication.",
       "documentation" : { },
-      "group" : "Google Workspace",
+      "group" : "Google Services",
       "id" : "7",
       "name" : "Google Identity Services",
       "properties" : {
@@ -448,65 +474,68 @@
         "destinationId" : "1",
         "id" : "32",
         "sourceId" : "7",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "OAuth 2.0"
       }, {
         "description" : "Single Sign On",
         "destinationId" : "2",
         "id" : "34",
         "sourceId" : "7",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "OAuth 2.0"
       }, {
         "description" : "Single Sign On",
         "destinationId" : "3",
         "id" : "36",
         "sourceId" : "7",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "OAuth 2.0"
       } ],
-      "tags" : "Element,Software System,External,GoogleWorkspace",
+      "tags" : "Element,Software System,External,GoogleServices",
       "url" : "http://localhost:3001/workspace/documentation#google-identity-services"
     }, {
       "description" : "Send emails as Agent or System.",
       "documentation" : { },
-      "group" : "Google Workspace",
+      "group" : "Google Services",
       "id" : "8",
       "name" : "Gmail API",
       "properties" : {
         "structurizr.dsl.identifier" : "gmailApi"
       },
-      "tags" : "Element,Software System,External,GoogleWorkspace",
+      "tags" : "Element,Software System,External,GoogleServices",
       "url" : "http://localhost:3001/workspace/documentation#gmail-api"
     }, {
       "description" : "Agent calendar management — viewings, meetings, availability.",
       "documentation" : { },
-      "group" : "Google Workspace",
+      "group" : "Google Services",
       "id" : "9",
       "name" : "Google Calendar API",
       "properties" : {
         "structurizr.dsl.identifier" : "googleCalendarApi"
       },
-      "tags" : "Element,Software System,External,GoogleWorkspace",
+      "tags" : "Element,Software System,External,GoogleServices",
       "url" : "http://localhost:3001/workspace/documentation#google-calendar-api"
     }, {
       "description" : "Embedded analytics and KPI dashboards.",
       "documentation" : { },
-      "group" : "Google Workspace",
+      "group" : "Google Services",
       "id" : "10",
       "name" : "Looker Studio",
       "properties" : {
         "structurizr.dsl.identifier" : "lookerStudio"
       },
-      "tags" : "Element,Software System,External,GoogleWorkspace",
+      "tags" : "Element,Software System,External,GoogleServices",
       "url" : "http://localhost:3001/workspace/documentation#looker-studio"
     }, {
       "description" : "LLM inference and semantic search.",
       "documentation" : { },
-      "group" : "Google Workspace",
+      "group" : "Google Services",
       "id" : "11",
       "name" : "Vertex AI",
       "properties" : {
         "structurizr.dsl.identifier" : "vertexAi"
       },
-      "tags" : "Element,Software System,External,GoogleWorkspace",
+      "tags" : "Element,Software System,External,GoogleServices",
       "url" : "http://localhost:3001/workspace/documentation#vertex-ai"
     }, {
       "description" : "WhatsApp for communication with Applicants.",
@@ -628,13 +657,15 @@
         "destinationId" : "20",
         "id" : "84",
         "sourceId" : "19",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "Git Webhook"
       }, {
         "description" : "Connects to CI/CD repository",
         "destinationId" : "21",
         "id" : "85",
         "sourceId" : "19",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "Git"
       } ],
       "tags" : "Element,Software System,Infrastructure"
     }, {
@@ -661,7 +692,8 @@
         "destinationId" : "18",
         "id" : "86",
         "sourceId" : "21",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "Kubernetes API"
       } ],
       "tags" : "Element,Software System,Infrastructure"
     }, {
@@ -688,7 +720,8 @@
         "destinationId" : "22",
         "id" : "87",
         "sourceId" : "23",
-        "tags" : "Relationship"
+        "tags" : "Relationship",
+        "technology" : "REST API"
       } ],
       "tags" : "Element,Software System,Infrastructure"
     }, {
@@ -698,7 +731,7 @@
         "id" : "25",
         "name" : "Pace DB",
         "properties" : {
-          "structurizr.dsl.identifier" : "paceDb"
+          "structurizr.dsl.identifier" : "paceWeb.paceDb"
         },
         "tags" : "Element,Container,Database",
         "technology" : "PostgreSQL on Google Cloud SQL",
@@ -709,7 +742,7 @@
         "id" : "26",
         "name" : "PACE",
         "properties" : {
-          "structurizr.dsl.identifier" : "pace"
+          "structurizr.dsl.identifier" : "paceWeb.pace"
         },
         "relationships" : [ {
           "description" : "Reads/writes data (INTF-DB-01)",
@@ -913,7 +946,7 @@
         "id" : "28",
         "name" : "PACE AI DB",
         "properties" : {
-          "structurizr.dsl.identifier" : "assistcraftDb"
+          "structurizr.dsl.identifier" : "paceAiSuite.assistcraftDb"
         },
         "tags" : "Element,Container,Database",
         "technology" : "PostgreSQL on Google Cloud SQL",
@@ -924,7 +957,7 @@
         "id" : "29",
         "name" : "PACE AI Backend",
         "properties" : {
-          "structurizr.dsl.identifier" : "paceAiBackend"
+          "structurizr.dsl.identifier" : "paceAiSuite.paceAiBackend"
         },
         "relationships" : [ {
           "description" : "Reads/writes AI data (INTF-DB-02)",
@@ -975,7 +1008,7 @@
         "id" : "30",
         "name" : "MCP Servers",
         "properties" : {
-          "structurizr.dsl.identifier" : "mcpServer"
+          "structurizr.dsl.identifier" : "paceAiSuite.mcpServer"
         },
         "relationships" : [ {
           "description" : "Fetch PACE data (INTF-AI-03)",
@@ -1033,15 +1066,20 @@
   },
   "name" : "PACE Architecture",
   "properties" : {
-    "structurizr.inspection.error" : "45",
+    "structurizr.inspection.error" : "0",
+    "structurizr.inspection.workspace.scope" : "ignore",
+    "structurizr.inspection.model.softwaresystem.documentation" : "ignore",
+    "structurizr.inspection.model.softwaresystem.decisions" : "ignore",
     "structurizr.inspection.info" : "0",
-    "structurizr.inspection.ignore" : "0",
-    "structurizr.inspection.warning" : "0"
+    "structurizr.inspection.ignore" : "13",
+    "structurizr.inspection.warning" : "0",
+    "structurizr.inspection.model.element.noview" : "ignore"
   },
   "views" : {
     "configuration" : {
       "branding" : { },
-      "lastSavedView" : "PaceWebContainers",
+      "lastSavedView" : "SystemContext",
+      "metadataSymbols" : "SquareBrackets",
       "styles" : {
         "elements" : [ {
           "background" : "#d4a017",
@@ -1071,7 +1109,7 @@
         }, {
           "background" : "#34a853",
           "color" : "#ffffff",
-          "tag" : "GoogleWorkspace"
+          "tag" : "GoogleServices"
         }, {
           "background" : "#666666",
           "color" : "#ffffff",
@@ -1522,24 +1560,28 @@
         "y" : 3347
       }, {
         "id" : "6",
-        "x" : 635,
-        "y" : 155
+        "x" : 630,
+        "y" : 160
       }, {
         "id" : "7",
-        "x" : 630,
+        "x" : 635,
         "y" : 1620
       }, {
         "id" : "8",
-        "x" : 627,
-        "y" : 1267
+        "x" : 635,
+        "y" : 1275
       }, {
         "id" : "9",
-        "x" : 627,
-        "y" : 597
+        "x" : 630,
+        "y" : 605
       }, {
         "id" : "10",
-        "x" : 627,
-        "y" : 932
+        "x" : 635,
+        "y" : 935
+      }, {
+        "id" : "11",
+        "x" : 630,
+        "y" : 1965
       }, {
         "id" : "12",
         "x" : 3077,
@@ -1631,6 +1673,15 @@
         }, {
           "x" : 2212,
           "y" : 2627
+        } ]
+      }, {
+        "id" : "43",
+        "vertices" : [ {
+          "x" : 2470,
+          "y" : 3010
+        }, {
+          "x" : 855,
+          "y" : 3005
         } ]
       }, {
         "id" : "44",
