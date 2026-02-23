@@ -1,10 +1,5 @@
-# Dependencies
-node_modules/
-
-# Build outputs
-dist/
-build/
-.likec4/
+# Project sites (deployed at runtime, not committed)
+projects/*/
 
 # IDE
 .idea/

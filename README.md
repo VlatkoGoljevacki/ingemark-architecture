@@ -1,64 +1,116 @@
-# Ingemark Architecture Repository
+# Ingemark Architecture Index
 
-Multi-project architecture documentation using LikeC4 diagrams and ADRs.
+Central index for all Ingemark project architecture documentation. Each project maintains its own architecture repository with diagrams, documentation, and ADRs. This repo provides a lightweight landing page — project sites are deployed at runtime, not committed here.
 
-## Structure
+## Projects
+
+| Project | Tooling | Repository |
+|---|---|---|
+| PACE | Structurizr DSL | [pace-architecture](../pace-architecture) |
+
+## How It Works
 
 ```
-ingemark-architecture/
-├── docker-compose.yml    # Shared LikeC4 service
-├── Makefile              # Common commands
-├── Pace/                 # Project: Pace
-│   ├── architecture/     # LikeC4 model and views
-│   ├── docs/
-│   │   ├── adr/          # Architecture Decision Records
-│   │   └── guides/       # Technical documentation
-│   └── exports/          # Generated diagram images
-└── <OtherProject>/       # Future projects follow same structure
+ingemark-architecture/          # This repo (committed)
+├── index.html                  # Landing page linking to all projects
+├── standards/                  # Company-wide conventions and templates
+├── projects/                   # Runtime content (gitignored)
+│   ├── pace/                   # Deployed by pace-architecture CI
+│   └── <project-x>/           # Deployed by project-x CI
+├── docker-compose.yml
+└── Makefile
 ```
 
-## Quick Start
+The `projects/` directory is **not committed** — it is populated at runtime. Each project's CI pipeline builds its static site and deploys the output to `projects/<name>/` on whatever server hosts the index.
+
+### Deployment Flow
+
+```
+pace-architecture repo          ingemark-architecture server
+┌─────────────────────┐         ┌──────────────────────────┐
+│ workspace.dsl       │  CI     │ index.html               │
+│ docs/               │ ─────>  │ projects/pace/  (deploy)  │
+│ adrs/               │  build  │                          │
+│ docker-compose.yml  │  + push │                          │
+└─────────────────────┘         └──────────────────────────┘
+```
+
+Each project repo is responsible for:
+1. Building its own static site (Structurizr, LikeC4, MkDocs — whatever it uses)
+2. Pushing the build output to `projects/<name>/` on the index server
+
+The index repo is responsible for:
+1. The landing page (`index.html`)
+2. Company-wide standards and templates
+3. Serving the aggregated content
+
+## Local Development
+
+### Serve the Index
 
 ```bash
-# Start LikeC4 dev server (all projects)
-docker compose up likec4
-
-# Open in browser
-open http://localhost:3000
+make serve
+# or
+npx serve .
 ```
 
-## Working with a Project
+Open [http://localhost:3000](http://localhost:3000).
+
+### Populate a Project Locally
+
+From the project repo (e.g., `pace-architecture`):
 
 ```bash
-# Export diagrams for a project
-make export PROJECT=Pace
+# Build the static site
+docker compose run --rm site-generatr
 
-# Create new ADR
-make adr PROJECT=Pace TITLE="use-redis-for-caching"
+# Deploy to the local index
+cp -r build/* ../ingemark-architecture/projects/pace/
 ```
 
-## Project Template
+Then refresh the index page — the PACE link will work.
 
-To add a new project:
+### Add a New Project
 
-```bash
-mkdir -p NewProject/{architecture,docs/adr,docs/guides,exports}
+1. Create a new architecture repo for the project
+2. Add a compose file with the appropriate site generator
+3. Add a link in `index.html` pointing to `projects/<name>/master/`
+4. Configure the project's CI to deploy build output to `projects/<name>/`
+
+## Standards
+
+### ADR Format
+
+All projects use [adr-tools](https://github.com/npryce/adr-tools) format for Architecture Decision Records:
+
+```markdown
+# <number>. <Title>
+
+Date: YYYY-MM-DD
+
+## Status
+
+Proposed | Accepted | Deprecated | Superseded
+
+## Context
+
+[Why is this decision needed?]
+
+## Decision
+
+[What was decided?]
+
+## Consequences
+
+[What are the implications?]
 ```
 
-Then create:
-- `NewProject/architecture/model.c4` - Element definitions
-- `NewProject/architecture/views.c4` - Diagram views
-- `NewProject/likec4.config.mjs` - Project config (optional)
+### Architecture Tooling
 
-## Conventions
+Projects can use any C4-compatible tooling:
 
-### ADR Linking
-
-1. **Model → ADR**: Use `link` property on elements
-2. **ADR → Diagram**: Reference exported SVGs or link to views
-3. **Tags**: Use `#adr-XXXX` tags for filtering
-
-### Element Naming
-
-- Use lowercase with dots for hierarchy: `pace.backend.userService`
-- Keep identifiers consistent across ADRs and model
+| Tool | Best For | Site Generator |
+|---|---|---|
+| [Structurizr DSL](https://docs.structurizr.com/dsl) | Manually positioned diagrams, mature C4 support | [structurizr-site-generatr](https://github.com/avisi-cloud/structurizr-site-generatr) |
+| [LikeC4](https://likec4.dev/) | Flexible views, code-first approach | Built-in export |
+| Plain Markdown | Simple documentation without diagrams | [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) |
